@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | AssetFlow by odoo</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <div class="login-container">
+        <img src="assets/images/blob.svg" alt="" class="corner-blob">
+
+        <p class="form-subtitle">Please enter your details</p>
+        <h2 class="form-title">Create Account</h2>
+
+        <form action="#" class="login-form">
+            <div class="input-wrapper">
+                <input type="text" id="fullname" class="input-field" placeholder=" " required>
+                <label for="fullname" class="input-label">Full name</label>
+            </div>
+
+            <div class="input-wrapper">
+                <input type="email" id="email" class="input-field" placeholder=" " required>
+                <label for="email" class="input-label">Email address</label>
+            </div>
+
+            <div class="input-wrapper">
+                <input type="password" id="password" class="input-field password-field" placeholder=" " required>
+                <label for="password" class="input-label">Password</label>
+                <i class='bx bx-hide eye-icon'></i>
+            </div>
+
+            <div class="input-wrapper">
+                <input type="password" id="confirm-password" class="input-field password-field" placeholder=" " required>
+                <label for="confirm-password" class="input-label">Confirm password</label>
+                <i class='bx bx-hide eye-icon'></i>
+            </div>
+
+            <button type="submit" class="login-button">Sign Up</button>
+        </form>
+
+        <p class="signup-text">Already have an account? <a href="index.html">Sign in</a></p>
+    </div>
+
+    <script>
+        document.querySelectorAll(".eye-icon").forEach(icon => {
+            icon.addEventListener("click", () => {
+                const field = icon.parentElement.querySelector(".password-field");
+                const isHidden = field.type === "password";
+                field.type = isHidden ? "text" : "password";
+                icon.classList.toggle("bx-hide", !isHidden);
+                icon.classList.toggle("bx-show", isHidden);
+            });
+        });
+    </script>
+
+</body>
+</html>
