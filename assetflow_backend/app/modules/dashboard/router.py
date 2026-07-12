@@ -15,7 +15,7 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 @router.get("/summary", response_model=DashboardSummary)
 async def summary(
     session: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> DashboardSummary:
     service = DashboardService(session)
-    return await service.summary()
+    return await service.summary(actor=current_user)

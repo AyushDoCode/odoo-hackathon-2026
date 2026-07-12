@@ -11,6 +11,7 @@ from app.modules.categories.schemas import AssetCategoryCreate, AssetCategoryUpd
 
 class AssetCategoryService:
     def __init__(self, session: AsyncSession) -> None:
+        self.session = session
         self.repository = AssetCategoryRepository(session)
 
     async def get_category(self, category_id: UUID) -> AssetCategory | None:
@@ -24,16 +25,20 @@ class AssetCategoryService:
 
     async def create_category(self, data: AssetCategoryCreate) -> AssetCategory:
         category = AssetCategory(**data.model_dump())
-        return await self.repository.create(category)
+        category = await self.repository.create(category)
+        await self.session.commit()
+        await self.session.refresh(category)
+        return category
 
     async def update_category(self, category: AssetCategory, data: AssetCategoryUpdate) -> AssetCategory:
         updates = data.model_dump(exclude_unset=True)
         for field_name, value in updates.items():
             setattr(category, field_name, value)
 
-        await self.repository.session.flush()
-        await self.repository.session.refresh(category)
+        await self.session.commit()
+        await self.session.refresh(category)
         return category
 
     async def delete_category(self, category: AssetCategory) -> None:
         await self.repository.delete(category)
+        await self.session.commit()

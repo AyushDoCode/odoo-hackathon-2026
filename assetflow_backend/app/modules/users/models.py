@@ -5,7 +5,8 @@ from uuid import UUID
 
 from sqlalchemy.types import Uuid
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Boolean, Enum as SQLEnum, String, text
+from sqlalchemy import Boolean, DateTime, Enum as SQLEnum, String, text
+from datetime import datetime
 
 from app.database.base import AuditMixin, Base
 
@@ -51,4 +52,10 @@ class User(AuditMixin, Base):
         nullable=False,
         default=True,
         server_default=text("1"),
+    )
+    password_reset_token_hash: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, index=True
+    )
+    password_reset_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
     )

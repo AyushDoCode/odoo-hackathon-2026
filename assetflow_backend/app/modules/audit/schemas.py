@@ -32,6 +32,12 @@ class AuditItemVerify(BaseModel):
     notes: str | None = None
 
 
+class DiscrepancyResolution(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    resolution_notes: str = Field(min_length=1, max_length=2000)
+
+
 class AuditItemRead(BaseModel):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
@@ -41,6 +47,9 @@ class AuditItemRead(BaseModel):
     expected_location: str | None
     verification: VerificationResult | None
     notes: str | None
+    resolution_notes: str | None
+    resolution_approved_by: UUID | None
+    resolution_approved_at: datetime | None
 
 
 class AuditCycleRead(BaseModel):

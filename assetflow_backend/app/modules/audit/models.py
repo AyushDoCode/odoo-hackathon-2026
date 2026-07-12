@@ -4,7 +4,9 @@ from datetime import date
 from enum import StrEnum
 from uuid import UUID
 
-from sqlalchemy import Date, ForeignKey, JSON, String, Text
+from datetime import datetime
+
+from sqlalchemy import Date, DateTime, ForeignKey, JSON, String, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import Uuid
@@ -76,6 +78,16 @@ class AuditItem(AuditMixin, Base):
         nullable=True,
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resolution_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resolution_approved_by: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    resolution_approved_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     cycle = relationship("AuditCycle", back_populates="items", lazy="raise")
     asset = relationship("Asset", lazy="raise")
+    resolution_approver = relationship(
+        "User", foreign_keys=[resolution_approved_by], lazy="raise"
+    )

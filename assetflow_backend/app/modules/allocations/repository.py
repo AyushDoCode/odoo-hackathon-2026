@@ -20,7 +20,11 @@ class AllocationRepository:
         statement = select(Allocation).where(
             Allocation.asset_id == asset_id,
             Allocation.status.in_(
-                [AllocationStatus.ACTIVE, AllocationStatus.TRANSFER_REQUESTED]
+                [
+                    AllocationStatus.ACTIVE,
+                    AllocationStatus.TRANSFER_REQUESTED,
+                    AllocationStatus.RETURN_REQUESTED,
+                ]
             ),
         )
         result = await self.session.execute(statement)

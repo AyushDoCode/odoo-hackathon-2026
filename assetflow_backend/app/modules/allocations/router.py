@@ -18,6 +18,7 @@ from app.modules.allocations.service import (
     AllocationPermissionError,
     AllocationService,
 )
+from app.modules.assets.service import AssetService
 from app.modules.users.models import User, UserRole
 
 router = APIRouter(prefix="/allocations", tags=["allocations"])
@@ -51,7 +52,9 @@ async def request_transfer(
 ) -> AllocationRead:
     service = AllocationService(session)
     try:
-        allocation = await service.request_transfer(asset_id, data, requested_by=current_user.id)
+        allocation = await service.request_transfer(asset_id, data, actor=current_user)
+    except AllocationPermissionError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
     except AllocationError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     return AllocationRead.model_validate(allocation)
@@ -81,8 +84,8 @@ async def approve_transfer(
     return AllocationRead.model_validate(allocation)
 
 
-@router.post("/{asset_id}/return", response_model=AllocationRead)
-async def return_asset(
+@router.post("/{asset_id}/return-request", response_model=AllocationRead)
+async def request_return(
     asset_id: UUID,
     data: ReturnRequest,
     session: AsyncSession = Depends(get_db),
@@ -90,8 +93,29 @@ async def return_asset(
 ) -> AllocationRead:
     service = AllocationService(session)
     try:
-        allocation = await service.return_asset(
-            asset_id, data.return_condition, actor_id=current_user.id
+        allocation = await service.request_return(
+            asset_id, data.return_condition, actor=current_user
+        )
+    except AllocationPermissionError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    except AllocationError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+    return AllocationRead.model_validate(allocation)
+
+
+@router.post(
+    "/{allocation_id}/approve-return",
+    response_model=AllocationRead,
+    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.ASSET_MANAGER))],
+)
+async def approve_return(
+    allocation_id: UUID,
+    session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> AllocationRead:
+    try:
+        allocation = await AllocationService(session).approve_return(
+            allocation_id, actor_id=current_user.id
         )
     except AllocationError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
@@ -102,8 +126,10 @@ async def return_asset(
 async def allocation_history(
     asset_id: UUID,
     session: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> list[AllocationRead]:
+    if not await AssetService(session).may_view(asset_id, current_user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "You cannot view this asset history")
     service = AllocationService(session)
     rows = await service.history(asset_id)
     return [AllocationRead.model_validate(row) for row in rows]

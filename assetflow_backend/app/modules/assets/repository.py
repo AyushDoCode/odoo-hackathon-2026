@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import aliased, selectinload
 
 from app.modules.allocations.models import Allocation, AllocationStatus
 from app.modules.assets.models import Asset, AssetStatus
@@ -45,6 +45,9 @@ class AssetRepository:
         category_id: UUID | None = None,
         status: AssetStatus | None = None,
         department_id: UUID | None = None,
+        location: str | None = None,
+        visible_to_user_id: UUID | None = None,
+        visible_to_department_id: UUID | None = None,
         offset: int = 0,
         limit: int = 100,
     ) -> list[Asset]:
@@ -57,12 +60,15 @@ class AssetRepository:
                     Asset.tag.ilike(like),
                     Asset.serial_number.ilike(like),
                     Asset.qr_code.ilike(like),
+                    Asset.location.ilike(like),
                 )
             )
         if category_id is not None:
             statement = statement.where(Asset.category_id == category_id)
         if status is not None:
             statement = statement.where(Asset.status == status)
+        if location is not None:
+            statement = statement.where(Asset.location.ilike(f"%{location.strip()}%"))
         if department_id is not None:
             # "Department" isn't stored on the asset itself -- it's derived from
             # whichever allocation currently holds it (an asset with no active
@@ -73,10 +79,54 @@ class AssetRepository:
                 & (Allocation.status == AllocationStatus.ACTIVE)
                 & (Allocation.department_id == department_id),
             )
+        if visible_to_user_id is not None or visible_to_department_id is not None:
+            visible_allocation = aliased(Allocation)
+            visibility = [Asset.is_bookable.is_(True)]
+            if visible_to_user_id is not None:
+                visibility.append(visible_allocation.to_user_id == visible_to_user_id)
+            if visible_to_department_id is not None:
+                visibility.append(visible_allocation.department_id == visible_to_department_id)
+            statement = statement.outerjoin(
+                visible_allocation,
+                (visible_allocation.asset_id == Asset.id)
+                & visible_allocation.status.in_(
+                    [
+                        AllocationStatus.ACTIVE,
+                        AllocationStatus.TRANSFER_REQUESTED,
+                        AllocationStatus.RETURN_REQUESTED,
+                    ]
+                ),
+            ).where(or_(*visibility)).distinct()
 
         statement = statement.offset(offset).limit(limit)
         result = await self.session.execute(statement)
         return list(result.scalars().all())
+
+    async def is_visible_to(
+        self,
+        asset_id: UUID,
+        *,
+        user_id: UUID | None = None,
+        department_id: UUID | None = None,
+    ) -> bool:
+        statement = select(Asset.id).outerjoin(
+            Allocation,
+            (Allocation.asset_id == Asset.id)
+            & Allocation.status.in_(
+                [
+                    AllocationStatus.ACTIVE,
+                    AllocationStatus.TRANSFER_REQUESTED,
+                    AllocationStatus.RETURN_REQUESTED,
+                ]
+            ),
+        ).where(Asset.id == asset_id)
+        visibility = [Asset.is_bookable.is_(True)]
+        if user_id is not None:
+            visibility.append(Allocation.to_user_id == user_id)
+        if department_id is not None:
+            visibility.append(Allocation.department_id == department_id)
+        statement = statement.where(or_(*visibility)).limit(1)
+        return (await self.session.execute(statement)).scalar_one_or_none() is not None
 
     async def create(self, asset: Asset) -> Asset:
         self.session.add(asset)

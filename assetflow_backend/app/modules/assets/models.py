@@ -4,7 +4,7 @@ from datetime import date
 from enum import StrEnum
 from uuid import UUID
 
-from sqlalchemy import Boolean, Date, ForeignKey, Numeric, String, Text
+from sqlalchemy import JSON, Boolean, Date, ForeignKey, Numeric, String, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import Uuid
@@ -53,6 +53,7 @@ class Asset(AuditMixin, Base):
     acquisition_cost: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
     condition: Mapped[str | None] = mapped_column(String(100), nullable=True)
     photo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    document_urls: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     is_bookable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     next_service_due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 

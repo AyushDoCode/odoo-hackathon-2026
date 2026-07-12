@@ -21,6 +21,11 @@ class UserRepository:
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
+    async def get_by_reset_token_hash(self, token_hash: str) -> User | None:
+        statement = select(User).where(User.password_reset_token_hash == token_hash)
+        result = await self.session.execute(statement)
+        return result.scalar_one_or_none()
+
     async def list(self, *, offset: int = 0, limit: int = 100) -> list[User]:
         statement = select(User).offset(offset).limit(limit)
         result = await self.session.execute(statement)

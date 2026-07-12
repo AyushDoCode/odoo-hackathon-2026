@@ -5,15 +5,20 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.activity.service import record as record_activity
+from app.modules.activity.service import notify, record as record_activity
 from app.modules.assets.repository import AssetRepository
 from app.modules.bookings.models import Booking, BookingStatus
 from app.modules.bookings.repository import BookingRepository
 from app.modules.bookings.schemas import BookingCreate
+from app.modules.users.models import User, UserRole
 
 
 class BookingError(ValueError):
     """Raised when a booking can't be created (slot unavailable, resource not bookable)."""
+
+
+class BookingPermissionError(PermissionError):
+    """Raised when a caller tries to change another user's booking."""
 
 
 class BookingService:
@@ -22,7 +27,7 @@ class BookingService:
         self.repository = BookingRepository(session)
         self.assets = AssetRepository(session)
 
-    async def create_booking(self, data: BookingCreate, *, created_by: UUID) -> Booking:
+    async def create_booking(self, data: BookingCreate, *, actor: User) -> Booking:
         """Race-safe: locks the resource (asset) row first, serializing every booking
         attempt for that resource through a single row lock -- a plain SELECT ... FOR
         UPDATE against the (not-yet-existing) overlapping booking rows can't prevent a
@@ -38,6 +43,13 @@ class BookingService:
         if not resource.is_bookable:
             await self.session.rollback()
             raise BookingError("This asset is not marked as a shared/bookable resource")
+        if (
+            data.department_id is not None
+            and actor.role not in {UserRole.ADMIN, UserRole.ASSET_MANAGER}
+            and actor.department_id != data.department_id
+        ):
+            await self.session.rollback()
+            raise BookingPermissionError("You may only book on behalf of your own department")
 
         overlaps = await self.repository.overlapping(
             data.resource_id, data.start_time, data.end_time
@@ -48,52 +60,94 @@ class BookingService:
 
         booking = Booking(
             resource_id=data.resource_id,
-            user_id=created_by,
+            user_id=actor.id,
             department_id=data.department_id,
             start_time=data.start_time,
             end_time=data.end_time,
             purpose=data.purpose,
             status=BookingStatus.BOOKED,
-            created_by=created_by,
+            created_by=actor.id,
         )
         self.repository.add(booking)
         await record_activity(
             self.session,
-            actor_id=created_by,
+            actor_id=actor.id,
             action_type="booking.confirmed",
             category="bookings",
             target_type="booking",
             target_id=None,
             message=f"Resource {data.resource_id} booked {data.start_time}-{data.end_time}",
         )
+        await notify(
+            self.session,
+            recipient_id=actor.id,
+            actor_id=actor.id,
+            action_type="booking.confirmed",
+            category="bookings",
+            target_type="booking",
+            target_id=booking.id,
+            message=f"Booking confirmed for resource {data.resource_id}",
+        )
         await self.session.commit()
         await self.session.refresh(booking)
         return booking
 
-    async def cancel_booking(self, booking_id: UUID) -> Booking:
+    @staticmethod
+    def _may_manage(booking: Booking, actor: User) -> bool:
+        return (
+            actor.id == booking.user_id
+            or actor.role in {UserRole.ADMIN, UserRole.ASSET_MANAGER}
+            or (
+                actor.role == UserRole.DEPARTMENT_HEAD
+                and actor.department_id is not None
+                and actor.department_id == booking.department_id
+            )
+        )
+
+    async def cancel_booking(self, booking_id: UUID, *, actor: User) -> Booking:
         booking = await self.repository.get_by_id(booking_id)
         if booking is None:
             raise BookingError("Booking not found")
+        if not self._may_manage(booking, actor):
+            raise BookingPermissionError("You may only cancel your own or your department's booking")
+        if booking.status == BookingStatus.CANCELLED:
+            raise BookingError("Booking is already cancelled")
         booking.status = BookingStatus.CANCELLED
         await record_activity(
             self.session,
-            actor_id=booking.user_id,
+            actor_id=actor.id,
             action_type="booking.cancelled",
             category="bookings",
             target_type="booking",
             target_id=booking.id,
             message=f"Booking {booking.id} cancelled",
         )
+        await notify(
+            self.session,
+            recipient_id=booking.user_id,
+            actor_id=actor.id,
+            action_type="booking.cancelled",
+            category="bookings",
+            target_type="booking",
+            target_id=booking.id,
+            message=f"Booking {booking.id} was cancelled",
+        )
         await self.session.commit()
         await self.session.refresh(booking)
         return booking
 
     async def reschedule_booking(
-        self, booking_id: UUID, new_start: datetime, new_end: datetime
+        self, booking_id: UUID, new_start: datetime, new_end: datetime, *, actor: User
     ) -> Booking:
         booking = await self.repository.get_by_id(booking_id)
         if booking is None:
             raise BookingError("Booking not found")
+        if not self._may_manage(booking, actor):
+            raise BookingPermissionError("You may only reschedule your own or your department's booking")
+        if booking.status == BookingStatus.CANCELLED:
+            raise BookingError("Cancelled bookings cannot be rescheduled")
+        if new_end <= new_start:
+            raise BookingError("end_time must be after start_time")
 
         resource = await self.assets.get_by_id_for_update(booking.resource_id)
         if resource is None:

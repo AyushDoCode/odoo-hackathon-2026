@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_current_user
 from app.database.session import get_db
 from app.modules.bookings.schemas import BookingCreate, BookingRead
-from app.modules.bookings.service import BookingError, BookingService
+from app.modules.bookings.service import BookingError, BookingPermissionError, BookingService
 from app.modules.users.models import User
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
@@ -23,7 +23,9 @@ async def create_booking(
 ) -> BookingRead:
     service = BookingService(session)
     try:
-        booking = await service.create_booking(data, created_by=current_user.id)
+        booking = await service.create_booking(data, actor=current_user)
+    except BookingPermissionError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
     except BookingError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     return BookingRead.model_validate(booking)
@@ -33,11 +35,13 @@ async def create_booking(
 async def cancel_booking(
     booking_id: UUID,
     session: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> BookingRead:
     service = BookingService(session)
     try:
-        booking = await service.cancel_booking(booking_id)
+        booking = await service.cancel_booking(booking_id, actor=current_user)
+    except BookingPermissionError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
     except BookingError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
     return BookingRead.model_validate(booking)
@@ -49,11 +53,15 @@ async def reschedule_booking(
     start_time: datetime = Body(embed=True),
     end_time: datetime = Body(embed=True),
     session: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> BookingRead:
     service = BookingService(session)
     try:
-        booking = await service.reschedule_booking(booking_id, start_time, end_time)
+        booking = await service.reschedule_booking(
+            booking_id, start_time, end_time, actor=current_user
+        )
+    except BookingPermissionError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
     except BookingError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     return BookingRead.model_validate(booking)

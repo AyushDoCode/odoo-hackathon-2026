@@ -7,12 +7,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, require_role
 from app.database.session import get_db
+from app.modules.assets.service import AssetService
 from app.modules.maintenance.schemas import (
     MaintenanceRequestCreate,
     MaintenanceRequestRead,
     TechnicianAssign,
 )
-from app.modules.maintenance.service import MaintenanceError, MaintenanceService
+from app.modules.maintenance.service import (
+    MaintenanceError,
+    MaintenancePermissionError,
+    MaintenanceService,
+)
 from app.modules.users.models import User, UserRole
 
 router = APIRouter(prefix="/maintenance", tags=["maintenance"])
@@ -27,17 +32,22 @@ async def raise_request(
     current_user: User = Depends(get_current_user),
 ) -> MaintenanceRequestRead:
     service = MaintenanceService(session)
-    request = await service.raise_request(data, created_by=current_user.id)
+    try:
+        request = await service.raise_request(data, actor=current_user)
+    except MaintenancePermissionError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    except MaintenanceError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     return MaintenanceRequestRead.model_validate(request)
 
 
 @router.get("/board", response_model=list[MaintenanceRequestRead])
 async def board(
     session: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> list[MaintenanceRequestRead]:
     service = MaintenanceService(session)
-    rows = await service.board()
+    rows = await service.board(actor=current_user)
     return [MaintenanceRequestRead.model_validate(row) for row in rows]
 
 
@@ -45,8 +55,10 @@ async def board(
 async def history(
     asset_id: UUID,
     session: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> list[MaintenanceRequestRead]:
+    if not await AssetService(session).may_view(asset_id, current_user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "You cannot view this asset history")
     service = MaintenanceService(session)
     rows = await service.history_for_asset(asset_id)
     return [MaintenanceRequestRead.model_validate(row) for row in rows]
@@ -110,7 +122,9 @@ async def start_progress(
 ) -> MaintenanceRequestRead:
     service = MaintenanceService(session)
     try:
-        request = await service.start_progress(request_id)
+        request = await service.start_progress(request_id, actor=current_user)
+    except MaintenancePermissionError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
     except MaintenanceError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     return MaintenanceRequestRead.model_validate(request)
@@ -120,11 +134,13 @@ async def start_progress(
 async def resolve(
     request_id: UUID,
     session: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> MaintenanceRequestRead:
     service = MaintenanceService(session)
     try:
-        request = await service.resolve(request_id)
+        request = await service.resolve(request_id, actor=current_user)
+    except MaintenancePermissionError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
     except MaintenanceError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     return MaintenanceRequestRead.model_validate(request)

@@ -11,6 +11,7 @@ class ActivityLogRead(BaseModel):
 
     id: UUID
     actor_id: UUID | None
+    recipient_id: UUID | None
     action_type: str
     category: str
     target_type: str

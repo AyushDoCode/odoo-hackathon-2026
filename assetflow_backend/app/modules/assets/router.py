@@ -37,14 +37,15 @@ async def register_asset(
 
 @router.get("", response_model=list[AssetRead])
 async def list_assets(
-    q: str | None = Query(default=None, description="Search by tag, serial number, or QR code"),
+    q: str | None = Query(default=None, description="Search by tag, serial number, QR code, or location"),
     category_id: UUID | None = None,
     status_filter: AssetStatus | None = Query(default=None, alias="status"),
     department_id: UUID | None = None,
+    location: str | None = None,
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=500),
     session: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> list[AssetRead]:
     service = AssetService(session)
     assets = await service.search_assets(
@@ -52,6 +53,8 @@ async def list_assets(
         category_id=category_id,
         status=status_filter,
         department_id=department_id,
+        location=location,
+        actor=current_user,
         offset=offset,
         limit=limit,
     )
@@ -62,12 +65,14 @@ async def list_assets(
 async def get_asset(
     asset_id: UUID,
     session: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> AssetRead:
     service = AssetService(session)
     asset = await service.get_asset(asset_id)
     if asset is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Asset not found")
+    if not await service.may_view(asset_id, current_user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "You cannot view this asset")
     return AssetRead.model_validate(asset)
 
 

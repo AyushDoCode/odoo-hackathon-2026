@@ -22,6 +22,7 @@ class AssetCreate(BaseModel):
     acquisition_cost: float | None = Field(default=None, ge=0)
     condition: str | None = Field(default=None, max_length=100)
     photo_url: str | None = Field(default=None, max_length=500)
+    document_urls: list[str] = Field(default_factory=list, max_length=10)
     is_bookable: bool = Field(default=False)
     next_service_due_date: date | None = None
 
@@ -39,6 +40,7 @@ class AssetUpdate(BaseModel):
     acquisition_cost: float | None = Field(default=None, ge=0)
     condition: str | None = Field(default=None, max_length=100)
     photo_url: str | None = Field(default=None, max_length=500)
+    document_urls: list[str] | None = Field(default=None, max_length=10)
     is_bookable: bool | None = None
     next_service_due_date: date | None = None
 
@@ -60,6 +62,7 @@ class AssetRead(BaseModel):
     acquisition_cost: float | None
     condition: str | None
     photo_url: str | None
+    document_urls: list[str]
     is_bookable: bool
     next_service_due_date: date | None
     created_at: datetime

@@ -26,6 +26,14 @@ class Settings(BaseSettings):
         ),
         ge=1,
     )
+    password_reset_expire_minutes: int = Field(default=15, ge=5, le=60)
+    upload_directory: str = Field(default="data/uploads")
+    max_upload_bytes: int = Field(default=5_000_000, ge=1_000, le=20_000_000)
+    cors_origins: str = Field(default="http://localhost:5173,http://localhost:3000")
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
 
 @lru_cache(maxsize=1)

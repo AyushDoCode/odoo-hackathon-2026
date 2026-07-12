@@ -7,16 +7,20 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_role
 from app.database.session import get_db
 from app.modules.reports.schemas import ReportsSummary
 from app.modules.reports.service import ReportsService
-from app.modules.users.models import User
+from app.modules.users.models import User, UserRole
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
 
-@router.get("/summary", response_model=ReportsSummary)
+@router.get(
+    "/summary",
+    response_model=ReportsSummary,
+    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.ASSET_MANAGER))],
+)
 async def summary(
     session: AsyncSession = Depends(get_db),
     _current_user: User = Depends(get_current_user),
@@ -25,7 +29,10 @@ async def summary(
     return await service.summary()
 
 
-@router.get("/export")
+@router.get(
+    "/export",
+    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.ASSET_MANAGER))],
+)
 async def export_csv(
     session: AsyncSession = Depends(get_db),
     _current_user: User = Depends(get_current_user),

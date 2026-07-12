@@ -17,6 +17,7 @@ class AllocationStatus(StrEnum):
     RETURNED = "RETURNED"
     TRANSFER_REQUESTED = "TRANSFER_REQUESTED"
     TRANSFER_APPROVED = "TRANSFER_APPROVED"
+    RETURN_REQUESTED = "RETURN_REQUESTED"
 
 
 class Allocation(AuditMixin, Base):

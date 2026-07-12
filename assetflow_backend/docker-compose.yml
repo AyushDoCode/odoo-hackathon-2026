@@ -26,8 +26,13 @@ services:
       SECRET_KEY: ${SECRET_KEY:-CHANGE_ME_TO_A_LONG_RANDOM_SECRET}
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3000
+      UPLOAD_DIRECTORY: /app/data/uploads
     ports:
       - "8000:8000"
+    volumes:
+      - assetflow_uploads:/app/data/uploads
 
 volumes:
   assetflow_mysql_data:
+  assetflow_uploads:

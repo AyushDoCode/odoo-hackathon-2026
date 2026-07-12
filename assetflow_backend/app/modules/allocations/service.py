@@ -5,7 +5,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.activity.service import record as record_activity
+from app.modules.activity.service import notify, record as record_activity
 from app.modules.allocations.models import Allocation, AllocationStatus
 from app.modules.allocations.repository import AllocationRepository
 from app.modules.allocations.schemas import AllocationCreate, TransferRequestCreate
@@ -33,6 +33,8 @@ class AllocationService:
         the allocation -- all in one transaction. A concurrent allocate() on the same asset
         will block on the row lock and then fail the status check once it proceeds.
         """
+        if data.to_user_id is None and data.department_id is None:
+            raise AllocationError("Allocation requires an employee or department")
         try:
             await self.assets.transition_status(
                 data.asset_id,
@@ -68,12 +70,35 @@ class AllocationService:
             target_id=data.asset_id,
             message=f"Asset {data.asset_id} allocated to user {data.to_user_id}",
         )
+        if data.to_user_id is not None:
+            await notify(
+                self.session,
+                recipient_id=data.to_user_id,
+                actor_id=created_by,
+                action_type="asset.assigned",
+                category="alerts",
+                target_type="asset",
+                target_id=data.asset_id,
+                message=f"Asset {data.asset_id} was assigned to you",
+            )
         await self.session.commit()
         await self.session.refresh(allocation)
         return allocation
 
+    @staticmethod
+    def _may_request(allocation: Allocation, actor: User) -> bool:
+        return (
+            actor.id == allocation.to_user_id
+            or actor.role in {UserRole.ADMIN, UserRole.ASSET_MANAGER}
+            or (
+                actor.role == UserRole.DEPARTMENT_HEAD
+                and actor.department_id is not None
+                and actor.department_id == allocation.department_id
+            )
+        )
+
     async def request_transfer(
-        self, asset_id: UUID, data: TransferRequestCreate, *, requested_by: UUID
+        self, asset_id: UUID, data: TransferRequestCreate, *, actor: User
     ) -> Allocation:
         locked_asset = await self.assets.repository.get_by_id_for_update(asset_id)
         if locked_asset is None:
@@ -84,10 +109,22 @@ class AllocationService:
         if allocation is None or allocation.status != AllocationStatus.ACTIVE:
             await self.session.rollback()
             raise AllocationError("Asset has no active allocation to transfer")
+        if not self._may_request(allocation, actor):
+            await self.session.rollback()
+            raise AllocationPermissionError("Only the holder or responsible manager may request transfer")
 
         allocation.status = AllocationStatus.TRANSFER_REQUESTED
         allocation.transfer_to_user_id = data.to_user_id
         allocation.reason = data.reason or allocation.reason
+        await record_activity(
+            self.session,
+            actor_id=actor.id,
+            action_type="transfer.requested",
+            category="approvals",
+            target_type="allocation",
+            target_id=allocation.id,
+            message=f"Transfer requested for asset {asset_id}",
+        )
         await self.session.commit()
         await self.session.refresh(allocation)
         return allocation
@@ -134,32 +171,97 @@ class AllocationService:
             target_id=allocation.asset_id,
             message=f"Transfer of asset {allocation.asset_id} approved by {actor.id}",
         )
+        if new_allocation.to_user_id is not None:
+            await notify(
+                self.session,
+                recipient_id=new_allocation.to_user_id,
+                actor_id=actor.id,
+                action_type="transfer.approved",
+                category="approvals",
+                target_type="allocation",
+                target_id=new_allocation.id,
+                message=f"Transfer approved: asset {allocation.asset_id} is assigned to you",
+            )
         await self.session.commit()
         await self.session.refresh(new_allocation)
         return new_allocation
 
-    async def return_asset(
-        self, asset_id: UUID, return_condition: str | None, *, actor_id: UUID
+    async def request_return(
+        self, asset_id: UUID, return_condition: str | None, *, actor: User
     ) -> Allocation:
+        await self.assets.repository.get_by_id_for_update(asset_id)
+        allocation = await self.repository.get_active_for_asset(asset_id)
+        if allocation is None or allocation.status != AllocationStatus.ACTIVE:
+            await self.session.rollback()
+            raise AllocationError("Asset has no active allocation to return")
+        if not self._may_request(allocation, actor):
+            await self.session.rollback()
+            raise AllocationPermissionError("Only the holder or responsible manager may request return")
+        allocation.status = AllocationStatus.RETURN_REQUESTED
+        allocation.return_condition = return_condition
+        await record_activity(
+            self.session,
+            actor_id=actor.id,
+            action_type="return.requested",
+            category="approvals",
+            target_type="allocation",
+            target_id=allocation.id,
+            message=f"Return requested for asset {asset_id}",
+        )
+        await self.session.commit()
+        await self.session.refresh(allocation)
+        return allocation
+
+    async def approve_return(self, allocation_id: UUID, *, actor_id: UUID) -> Allocation:
+        allocation = await self.repository.get_by_id(allocation_id)
+        if allocation is None or allocation.status != AllocationStatus.RETURN_REQUESTED:
+            raise AllocationError("Allocation has no pending return request")
         try:
             await self.assets.transition_status(
-                asset_id, AssetStatus.AVAILABLE, expected_current={AssetStatus.ALLOCATED}
+                allocation.asset_id,
+                AssetStatus.AVAILABLE,
+                expected_current={AssetStatus.ALLOCATED},
             )
         except AssetConflictError as exc:
             await self.session.rollback()
             raise AllocationError(str(exc)) from exc
 
-        allocation = await self.repository.get_active_for_asset(asset_id)
-        if allocation is None:
-            await self.session.rollback()
-            raise AllocationError("Asset has no active allocation to return")
-
         allocation.status = AllocationStatus.RETURNED
         allocation.returned_at = datetime.now(UTC)
-        allocation.return_condition = return_condition
+        allocation.approved_by = actor_id
+        await record_activity(
+            self.session,
+            actor_id=actor_id,
+            action_type="return.approved",
+            category="approvals",
+            target_type="allocation",
+            target_id=allocation.id,
+            message=f"Return approved for asset {allocation.asset_id}",
+        )
+        if allocation.to_user_id is not None:
+            await notify(
+                self.session,
+                recipient_id=allocation.to_user_id,
+                actor_id=actor_id,
+                action_type="return.approved",
+                category="approvals",
+                target_type="allocation",
+                target_id=allocation.id,
+                message=f"Return approved for asset {allocation.asset_id}",
+            )
         await self.session.commit()
         await self.session.refresh(allocation)
         return allocation
+
+    async def close_for_maintenance(self, asset_id: UUID, *, actor_id: UUID) -> None:
+        allocation = await self.repository.get_active_for_asset(asset_id)
+        if allocation is None:
+            return
+        allocation.status = AllocationStatus.RETURNED
+        allocation.returned_at = datetime.now(UTC)
+        allocation.return_condition = "Automatically checked in for approved maintenance"
+        allocation.approved_by = actor_id
+        await self.session.flush()
 
     async def history(self, asset_id: UUID) -> list[Allocation]:
         return await self.repository.history_for_asset(asset_id)

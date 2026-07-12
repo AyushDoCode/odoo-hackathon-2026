@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.assets.models import Asset, AssetStatus
 from app.modules.assets.repository import AssetRepository
 from app.modules.assets.schemas import AssetCreate, AssetUpdate
+from app.modules.users.models import User, UserRole
 
 
 class AssetConflictError(ValueError):
@@ -41,16 +42,36 @@ class AssetService:
         category_id: UUID | None = None,
         status: AssetStatus | None = None,
         department_id: UUID | None = None,
+        location: str | None = None,
+        actor: User | None = None,
         offset: int = 0,
         limit: int = 100,
     ) -> list[Asset]:
+        visible_to_user_id = None
+        visible_to_department_id = None
+        if actor is not None and actor.role == UserRole.EMPLOYEE:
+            visible_to_user_id = actor.id
+        elif actor is not None and actor.role == UserRole.DEPARTMENT_HEAD:
+            visible_to_department_id = actor.department_id
         return await self.repository.search(
             query=query,
             category_id=category_id,
             status=status,
             department_id=department_id,
+            location=location,
+            visible_to_user_id=visible_to_user_id,
+            visible_to_department_id=visible_to_department_id,
             offset=offset,
             limit=limit,
+        )
+
+    async def may_view(self, asset_id: UUID, actor: User) -> bool:
+        if actor.role in {UserRole.ADMIN, UserRole.ASSET_MANAGER}:
+            return True
+        return await self.repository.is_visible_to(
+            asset_id,
+            user_id=actor.id if actor.role == UserRole.EMPLOYEE else None,
+            department_id=actor.department_id if actor.role == UserRole.DEPARTMENT_HEAD else None,
         )
 
     async def create_asset(self, data: AssetCreate, *, created_by: UUID | None) -> Asset:

@@ -16,6 +16,9 @@ class ActivityLog(AuditMixin, Base):
     actor_id: Mapped[UUID | None] = mapped_column(
         Uuid(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
+    recipient_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     action_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     category: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     target_type: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -24,3 +27,4 @@ class ActivityLog(AuditMixin, Base):
     is_read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     actor = relationship("User", foreign_keys=[actor_id], lazy="raise")
+    recipient = relationship("User", foreign_keys=[recipient_id], lazy="raise")

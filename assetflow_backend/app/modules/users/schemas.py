@@ -56,7 +56,6 @@ class UserUpdate(BaseModel):
 
     name: str | None = Field(default=None, min_length=1, max_length=255)
     email: EmailStr | None = None
-    hashed_password: str | None = Field(default=None, min_length=1)
     role: UserRole | None = None
     department_id: UUID | None = None
     is_active: bool | None = None

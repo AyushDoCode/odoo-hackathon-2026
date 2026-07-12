@@ -1,11 +1,19 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.modules.bookings.models import BookingStatus
+
+
+class BookingViewStatus(StrEnum):
+    UPCOMING = "UPCOMING"
+    ONGOING = "ONGOING"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
 
 
 class BookingCreate(BaseModel):
@@ -34,7 +42,40 @@ class BookingRead(BaseModel):
     start_time: datetime
     end_time: datetime
     purpose: str | None
-    status: BookingStatus
+    status: BookingViewStatus
     created_at: datetime
     updated_at: datetime
     created_by: UUID | None
+
+    @model_validator(mode="before")
+    @classmethod
+    def derive_status(cls, value):
+        if isinstance(value, dict):
+            data = dict(value)
+        else:
+            data = {
+                name: getattr(value, name)
+                for name in (
+                    "id", "resource_id", "user_id", "department_id", "start_time",
+                    "end_time", "purpose", "created_at", "updated_at", "created_by"
+                )
+            }
+            data["status"] = getattr(value, "status")
+        stored_status = data.get("status")
+        if stored_status == BookingStatus.CANCELLED or stored_status == BookingStatus.CANCELLED.value:
+            data["status"] = BookingViewStatus.CANCELLED
+            return data
+        now = datetime.now(UTC)
+        start = data["start_time"]
+        end = data["end_time"]
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=UTC)
+        if end.tzinfo is None:
+            end = end.replace(tzinfo=UTC)
+        if now < start:
+            data["status"] = BookingViewStatus.UPCOMING
+        elif now < end:
+            data["status"] = BookingViewStatus.ONGOING
+        else:
+            data["status"] = BookingViewStatus.COMPLETED
+        return data

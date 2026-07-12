@@ -29,3 +29,23 @@ class RegisterRequest(BaseModel):
     name: str
     email: EmailStr
     password: str = Field(min_length=8)
+
+
+class ForgotPasswordRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    email: EmailStr
+
+
+class ForgotPasswordResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    detail: str
+    reset_token: str
+
+
+class ResetPasswordRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    reset_token: str = Field(min_length=20)
+    new_password: str = Field(min_length=8)

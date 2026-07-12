@@ -13,6 +13,7 @@ from app.modules.audit.schemas import (
     AuditItemRead,
     AuditItemVerify,
     DiscrepancyReport,
+    DiscrepancyResolution,
 )
 from app.modules.audit.service import AuditError, AuditPermissionError, AuditService
 from app.modules.users.models import User, UserRole
@@ -40,12 +41,14 @@ async def create_cycle(
 async def get_cycle(
     cycle_id: UUID,
     session: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> AuditCycleDetail:
     service = AuditService(session)
     cycle = await service.get_cycle(cycle_id)
     if cycle is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Audit cycle not found")
+    if not service.may_view_cycle(cycle, current_user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "You cannot view this audit cycle")
     return AuditCycleDetail.model_validate(cycle)
 
 
@@ -61,6 +64,26 @@ async def verify_item(
         item = await service.verify_item(item_id, data, actor=current_user)
     except AuditPermissionError as exc:
         raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    except AuditError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+    return AuditItemRead.model_validate(item)
+
+
+@router.post(
+    "/items/{item_id}/approve-discrepancy",
+    response_model=AuditItemRead,
+    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.ASSET_MANAGER))],
+)
+async def approve_discrepancy(
+    item_id: UUID,
+    data: DiscrepancyResolution,
+    session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> AuditItemRead:
+    try:
+        item = await AuditService(session).approve_discrepancy(
+            item_id, data, actor=current_user
+        )
     except AuditError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     return AuditItemRead.model_validate(item)
@@ -86,7 +109,12 @@ async def close_cycle(
 async def discrepancy_report(
     cycle_id: UUID,
     session: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> DiscrepancyReport:
     service = AuditService(session)
+    cycle = await service.get_cycle(cycle_id)
+    if cycle is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Audit cycle not found")
+    if not service.may_view_cycle(cycle, current_user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "You cannot view this audit cycle")
     return await service.discrepancy_report(cycle_id)
