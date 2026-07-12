@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance | AssetFlow by odoo</title>
+    <link rel="stylesheet" href="assets/pages.css">
+</head>
+<body class="app-page">
+    <div class="app-shell">
+        <aside class="side-nav">
+            <div>
+                <div class="brand">
+                    <div class="brand-row">
+                        <span class="brand-mark square"><img src="assets/icons/nav-org.svg" alt="" style="width:20px;height:18px;"></span>
+                        <div>
+                            <div class="brand-title">AssetFlow</div>
+                            <div class="brand-subtitle caps">Enterprise Management</div>
+                        </div>
+                    </div>
+                </div>
+                <nav class="nav-main">
+                    <ul class="nav-list inset">
+                        <li><a class="nav-link" href="dashboard.html"><img src="assets/icons/nav-dashboard.svg" alt=""><span>Dashboard</span></a></li>
+                        <li><a class="nav-link" href="organization-setup.html"><img src="assets/icons/nav-org.svg" alt=""><span>Organization Setup</span></a></li>
+                        <li><a class="nav-link" href="assets-directory.html"><img src="assets/icons/nav-assets.svg" alt=""><span>Assets</span></a></li>
+                        <li><a class="nav-link" href="allocation-transfer.html"><img src="assets/icons/nav-allocation.svg" alt=""><span>Allocation &amp; Transfer</span></a></li>
+                        <li><a class="nav-link" href="resource-booking.html"><img src="assets/icons/nav-booking.svg" alt=""><span>Resource Booking</span></a></li>
+                        <li><a class="nav-link active" href="maintenance.html"><img src="assets/icons/nav-maintenance.svg" alt=""><span>Maintenance</span></a></li>
+                        <li><a class="nav-link" href="audit.html"><img src="assets/icons/nav-audit.svg" alt=""><span>Audit</span></a></li>
+                        <li><a class="nav-link" href="reports.html"><img src="assets/icons/nav-reports.svg" alt=""><span>Reports</span></a></li>
+                        <li><a class="nav-link" href="notifications.html"><img src="assets/icons/nav-notifications.svg" alt=""><span>Notifications</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="nav-footer">
+                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <header class="topbar">
+                <div class="search-wrap">
+                    <input class="search-input" type="text" placeholder="Search maintenance tickets, assets...">
+                    <img class="search-icon" src="assets/icons/icon-search.svg" alt="">
+                </div>
+                <div class="top-actions">
+                    <button class="icon-button" aria-label="Notifications">
+                        <img src="assets/icons/icon-bell.svg" alt="">
+                        <span class="dot"></span>
+                    </button>
+                    <div class="user-chip">
+                        <div class="user-lines"><strong>Admin User</strong><small>Facilities Dept</small></div>
+                        <div class="avatar-text">AU</div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="page-content" style="padding-top:17px;">
+                <div class="content-inner stack-24">
+                    <div class="page-header center">
+                        <div>
+                            <h1 class="page-title">Maintenance Management</h1>
+                            <p class="page-kicker">Drag and drop tickets to update workflow status.</p>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn outline">
+                                <svg class="small-icon" viewBox="0 0 24 24"><path d="M4 6h16M8 12h8M10 18h4"/></svg>
+                                FILTER
+                            </button>
+                            <button class="btn primary">+ NEW TICKET</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="kanban-wrap">
+                <div class="kanban">
+                    <div class="kanban-col">
+                        <div class="kanban-head">
+                            <h2 class="kanban-title"><span class="status-dot" style="color:#6c757d;"></span>Pending</h2>
+                            <span class="badge">2</span>
+                        </div>
+                        <div class="kanban-body">
+                            <article class="ticket">
+                                <div class="ticket-top"><span class="ticket-code">AF-0062</span><span class="avatar-mini">--</span></div>
+                                <h3 class="ticket-title">Projector bulb not turning on</h3>
+                                <p class="ticket-meta">Room B2</p>
+                                <div class="ticket-foot"><span>Reported: Today</span><span class="avatar-mini">--</span></div>
+                            </article>
+                            <article class="ticket">
+                                <div class="ticket-top"><span class="ticket-code">AF-0145</span><span class="avatar-mini">--</span></div>
+                                <h3 class="ticket-title">AC Unit leaking water</h3>
+                                <p class="ticket-meta">HQ Floor 3</p>
+                                <div class="ticket-foot"><span>Reported: Yesterday</span><span class="avatar-mini">--</span></div>
+                            </article>
+                        </div>
+                    </div>
+
+                    <div class="kanban-col">
+                        <div class="kanban-head">
+                            <h2 class="kanban-title"><span class="status-dot" style="color:#00696e;"></span>Approved</h2>
+                            <span class="badge">1</span>
+                        </div>
+                        <div class="kanban-body">
+                            <article class="ticket" style="border-left:4px solid #00696e;padding-left:16px;">
+                                <div class="ticket-top"><span class="ticket-code">AF-0031</span><span class="avatar-mini">--</span></div>
+                                <h3 class="ticket-title">Noisy compressor</h3>
+                                <p class="ticket-meta">HVAC</p>
+                                <div class="ticket-foot"><span style="color:#00696e;font-weight:500;">Awaiting Tech</span><span class="avatar-mini">--</span></div>
+                            </article>
+                        </div>
+                    </div>
+
+                    <div class="kanban-col">
+                        <div class="kanban-head">
+                            <h2 class="kanban-title"><span class="status-dot" style="color:#714b67;"></span>Technician Assigned</h2>
+                            <span class="badge">1</span>
+                        </div>
+                        <div class="kanban-body">
+                            <article class="ticket">
+                                <div class="ticket-top"><span class="ticket-code">AF-0878</span><span class="avatar-mini" style="background:#714b67;color:#fff;">RV</span></div>
+                                <h3 class="ticket-title">Forklift regular service</h3>
+                                <p class="ticket-meta">Warehouse</p>
+                                <div class="ticket-foot"><span style="color:#714b67;">Tomorrow</span><span class="avatar-mini" style="background:#714b67;color:#fff;">RV</span></div>
+                            </article>
+                        </div>
+                    </div>
+
+                    <div class="kanban-col">
+                        <div class="kanban-head">
+                            <h2 class="kanban-title"><span class="status-dot" style="color:#008b91;"></span>In Progress</h2>
+                            <span class="badge">1</span>
+                        </div>
+                        <div class="kanban-body">
+                            <article class="ticket" style="border-left:4px solid #008b91;padding-left:16px;">
+                                <div class="ticket-top"><span class="ticket-code">AF-0210</span><span class="avatar-mini">MK</span></div>
+                                <h3 class="ticket-title">Network rack inspection</h3>
+                                <p class="ticket-meta">Server Room A</p>
+                                <div class="ticket-foot"><span>Started 09:30</span><span class="avatar-mini">MK</span></div>
+                            </article>
+                        </div>
+                    </div>
+
+                    <div class="kanban-col">
+                        <div class="kanban-head">
+                            <h2 class="kanban-title"><span class="status-dot" style="color:#3b4c24;"></span>Resolved</h2>
+                            <span class="badge">1</span>
+                        </div>
+                        <div class="kanban-body">
+                            <article class="ticket done">
+                                <div class="ticket-top"><span class="ticket-code" style="background:#e1e3e4;color:#6c757d;text-decoration:line-through;">AF-873</span><span class="avatar-mini">OK</span></div>
+                                <h3 class="ticket-title">Chair repair</h3>
+                                <div class="ticket-foot"><span style="color:#34451e;font-weight:500;">Resolved 7 Jul</span><span class="avatar-mini">RV</span></div>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="help-text">Approving a card moves the asset to under maintenance, resolving return it to available.</div>
+        </main>
+    </div>
+</body>
+</html>

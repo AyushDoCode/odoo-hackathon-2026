@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | AssetFlow by odoo</title>
+    <link rel="stylesheet" href="assets/pages.css">
+</head>
+<body class="app-page">
+    <div class="app-shell">
+        <aside class="side-nav">
+            <div>
+                <div class="brand">
+                    <div class="brand-row">
+                        <span class="brand-mark square"><img src="assets/icons/nav-org.svg" alt="" style="width:20px;height:18px;"></span>
+                        <div>
+                            <div class="brand-title">AssetFlow</div>
+                            <div class="brand-subtitle caps">Enterprise Management</div>
+                        </div>
+                    </div>
+                </div>
+                <nav class="nav-main">
+                    <ul class="nav-list inset">
+                        <li><a class="nav-link active" href="dashboard.html"><img src="assets/icons/nav-dashboard.svg" alt=""><span>Dashboard</span></a></li>
+                        <li><a class="nav-link" href="organization-setup.html"><img src="assets/icons/nav-org.svg" alt=""><span>Organization Setup</span></a></li>
+                        <li><a class="nav-link" href="assets-directory.html"><img src="assets/icons/nav-assets.svg" alt=""><span>Assets</span></a></li>
+                        <li><a class="nav-link" href="allocation-transfer.html"><img src="assets/icons/nav-allocation.svg" alt=""><span>Allocation &amp; Transfer</span></a></li>
+                        <li><a class="nav-link" href="resource-booking.html"><img src="assets/icons/nav-booking.svg" alt=""><span>Resource Booking</span></a></li>
+                        <li><a class="nav-link" href="maintenance.html"><img src="assets/icons/nav-maintenance.svg" alt=""><span>Maintenance</span></a></li>
+                        <li><a class="nav-link" href="audit.html"><img src="assets/icons/nav-audit.svg" alt=""><span>Audit</span></a></li>
+                        <li><a class="nav-link" href="reports.html"><img src="assets/icons/nav-reports.svg" alt=""><span>Reports</span></a></li>
+                        <li><a class="nav-link" href="notifications.html"><img src="assets/icons/nav-notifications.svg" alt=""><span>Notifications</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="nav-footer">
+                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <header class="topbar">
+                <div class="search-wrap flex">
+                    <input class="search-input" type="text" placeholder="Search...">
+                    <img class="search-icon" src="assets/icons/icon-search.svg" alt="">
+                </div>
+                <div class="top-actions">
+                    <button class="icon-button"><img src="assets/icons/icon-bell.svg" alt=""></button>
+                    <button class="icon-button"><img src="assets/icons/icon-help.svg" alt=""></button>
+                    <div style="width:1px;height:32px;background:#e9ecef;"></div>
+                    <div class="user-chip">
+                        <div class="avatar-text">US</div>
+                        <span class="tiny-caps">User Profile</span>
+                    </div>
+                </div>
+            </header>
+
+            <section class="page-content">
+                <div class="content-inner stack-24">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Dashboard</h1>
+                            <p class="page-kicker">Overview and quick actions for AssetFlow.</p>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn primary">Quick Action</button>
+                        </div>
+                    </div>
+
+                    <section class="grid-12">
+                        <div class="col-4 card card-pad">
+                            <p class="item-sub">Available</p>
+                            <p class="page-title">128</p>
+                        </div>
+                        <div class="col-4 card card-pad">
+                            <p class="item-sub">Allocated</p>
+                            <p class="page-title">76</p>
+                        </div>
+                        <div class="col-4 card card-pad">
+                            <p class="item-sub">Active Bookings</p>
+                            <p class="page-title">9</p>
+                        </div>
+                    </section>
+
+                    <section class="grid-12">
+                        <div class="col-4 card card-pad">
+                            <p class="item-sub">Pending Transfers</p>
+                            <p class="page-title">3</p>
+                        </div>
+                        <div class="col-4 card card-pad">
+                            <p class="item-sub">Upcoming Returns</p>
+                            <p class="page-title">12</p>
+                        </div>
+                        <div class="col-4 card card-pad">
+                            <p class="item-sub">New Requests</p>
+                            <p class="page-title">7</p>
+                        </div>
+                    </section>
+
+                    <section class="alert">
+                        <img src="assets/icons/icon-alert.svg" alt="">
+                        <div>
+                            <h4>3 assets overdue for return</h4>
+                            <p>These items are flagged for follow-up today.</p>
+                        </div>
+                    </section>
+
+                    <section class="card card-pad">
+                        <div class="page-header center">
+                            <div>
+                                <h2 class="page-title">Recent Activity</h2>
+                                <p class="page-kicker">Latest updates across bookings and assets.</p>
+                            </div>
+                        </div>
+                        <div class="small-list">
+                            <div class="item">
+                                <p class="item-title">Laptop AF-0114 allocated to Priya Shah — IT dept</p>
+                                <p class="item-sub">Today • 10:15 AM</p>
+                            </div>
+                            <div class="item">
+                                <p class="item-title">Room B2 booking confirmed for 2:00–3:00 PM</p>
+                                <p class="item-sub">Today • 09:20 AM</p>
+                            </div>
+                            <div class="item">
+                                <p class="item-title">Projector AF-0062 maintenance resolved</p>
+                                <p class="item-sub">Yesterday • 04:30 PM</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

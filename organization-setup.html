@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organization Setup | AssetFlow by odoo</title>
+    <link rel="stylesheet" href="assets/pages.css">
+</head>
+<body class="app-page">
+    <div class="app-shell">
+        <aside class="side-nav">
+            <div>
+                <div class="brand">
+                    <div class="brand-row">
+                        <span class="brand-mark square"><img src="assets/icons/nav-org.svg" alt="" style="width:20px;height:18px;"></span>
+                        <div>
+                            <div class="brand-title">AssetFlow</div>
+                            <div class="brand-subtitle caps">Enterprise Management</div>
+                        </div>
+                    </div>
+                </div>
+                <nav class="nav-main">
+                    <ul class="nav-list inset">
+                        <li><a class="nav-link" href="dashboard.html"><img src="assets/icons/nav-dashboard.svg" alt=""><span>Dashboard</span></a></li>
+                        <li><a class="nav-link active" href="organization-setup.html"><img src="assets/icons/nav-org.svg" alt=""><span>Organization Setup</span></a></li>
+                        <li><a class="nav-link" href="assets-directory.html"><img src="assets/icons/nav-assets.svg" alt=""><span>Assets</span></a></li>
+                        <li><a class="nav-link" href="allocation-transfer.html"><img src="assets/icons/nav-allocation.svg" alt=""><span>Allocation &amp; Transfer</span></a></li>
+                        <li><a class="nav-link" href="resource-booking.html"><img src="assets/icons/nav-booking.svg" alt=""><span>Resource Booking</span></a></li>
+                        <li><a class="nav-link" href="maintenance.html"><img src="assets/icons/nav-maintenance.svg" alt=""><span>Maintenance</span></a></li>
+                        <li><a class="nav-link" href="audit.html"><img src="assets/icons/nav-audit.svg" alt=""><span>Audit</span></a></li>
+                        <li><a class="nav-link" href="reports.html"><img src="assets/icons/nav-reports.svg" alt=""><span>Reports</span></a></li>
+                        <li><a class="nav-link" href="notifications.html"><img src="assets/icons/nav-notifications.svg" alt=""><span>Notifications</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="nav-footer">
+                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <header class="topbar strong">
+                <div class="search-wrap">
+                    <input class="search-input white" type="text" placeholder="Search organization...">
+                    <img class="search-icon" src="assets/icons/icon-search.svg" alt="">
+                </div>
+                <div class="top-actions">
+                    <button class="icon-button"><img src="assets/icons/icon-bell.svg" alt=""><span class="dot"></span></button>
+                    <button class="icon-button"><img src="assets/icons/icon-help.svg" alt=""></button>
+                    <div style="width:1px;height:24px;background:#d1c3ca;"></div>
+                    <div class="user-chip">
+                        <div class="avatar-text" style="width:32px;height:32px;border-radius:12px;font-size:11px;">AU</div>
+                        <div>
+                            <div class="tiny-caps" style="color:#191c1d;">Admin User</div>
+                            <div style="font-size:10px;line-height:10px;color:#4e444a;">Super Admin</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="page-content">
+                <div class="content-inner stack-24">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Organization Setup</h1>
+                            <p class="page-kicker">Manage enterprise hierarchy, departments, and personnel mapping.</p>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn outline">
+                                <svg class="small-icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg>
+                                Export
+                            </button>
+                            <button class="btn primary">+ Add New</button>
+                        </div>
+                    </div>
+
+                    <section class="card r8" style="overflow:hidden;">
+                        <div class="tabs">
+                            <button class="tab active">Departments</button>
+                            <button class="tab">Categories</button>
+                            <button class="tab">Employees</button>
+                        </div>
+
+                        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--bg);padding:16px;">
+                            <div class="search-wrap" style="width:288px;">
+                                <input class="search-input" style="height:36px;background:#fff;padding-left:37px;" type="text" placeholder="Filter departments...">
+                                <img class="search-icon" src="assets/icons/ad-search-filter.svg" alt="">
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span style="font-size:12px;color:#4e444a;">View:</span>
+                                <div style="display:flex;border:1px solid var(--border);background:#f3f4f5;border-radius:2px;padding:3px;">
+                                    <button class="icon-button" style="width:28px;height:28px;border-radius:2px;background:#fff;"><svg class="small-icon" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg></button>
+                                    <button class="icon-button" style="width:28px;height:28px;border-radius:2px;"><svg class="small-icon" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:48px;"><span style="display:block;width:16px;height:16px;border:1px solid #d1c3ca;background:#fff;"></span></th>
+                                    <th>Department Name</th>
+                                    <th>Department Code</th>
+                                    <th>Head of Department</th>
+                                    <th>Parent Dept</th>
+                                    <th>Status</th>
+                                    <th class="right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span style="display:block;width:16px;height:16px;border:1px solid #d1c3ca;background:#fff;"></span></td>
+                                    <td><strong>Information Technology</strong></td>
+                                    <td class="mono muted" style="font-size:12px;">DEP-IT-001</td>
+                                    <td><span class="avatar-mini">SJ</span> Sarah Jenkins</td>
+                                    <td class="muted">Headquarters</td>
+                                    <td><span class="badge green"><span class="status-dot"></span>Active</span></td>
+                                    <td class="right"></td>
+                                </tr>
+                                <tr>
+                                    <td><span style="display:block;width:16px;height:16px;border:1px solid #d1c3ca;background:#fff;"></span></td>
+                                    <td><strong>Infrastructure</strong></td>
+                                    <td class="mono muted" style="font-size:12px;">DEP-IT-102</td>
+                                    <td><span class="avatar-mini">MC</span> Michael Chen</td>
+                                    <td class="muted">Information Technology</td>
+                                    <td><span class="badge green"><span class="status-dot"></span>Active</span></td>
+                                    <td class="right"></td>
+                                </tr>
+                                <tr>
+                                    <td><span style="display:block;width:16px;height:16px;border:1px solid #d1c3ca;background:#fff;"></span></td>
+                                    <td><strong>Operations</strong></td>
+                                    <td class="mono muted" style="font-size:12px;">DEP-OP-001</td>
+                                    <td><span class="avatar-mini">DR</span> David Ross</td>
+                                    <td class="muted">Headquarters</td>
+                                    <td><span class="badge green"><span class="status-dot"></span>Active</span></td>
+                                    <td class="right"></td>
+                                </tr>
+                                <tr>
+                                    <td><span style="display:block;width:16px;height:16px;border:1px solid #d1c3ca;background:#fff;"></span></td>
+                                    <td><strong>Logistics</strong></td>
+                                    <td class="mono muted" style="font-size:12px;">DEP-OP-105</td>
+                                    <td><em class="muted">Unassigned</em></td>
+                                    <td class="muted">Operations</td>
+                                    <td><span class="badge"><span class="status-dot"></span>Inactive</span></td>
+                                    <td class="right"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="pagination">
+                            <span style="font-size:12px;color:#4e444a;">Showing 1 to 4 of 24 entries</span>
+                            <div class="page-numbers">
+                                <span class="page-box" style="opacity:.5;">&lt;</span>
+                                <span class="page-box active">1</span>
+                                <span class="page-box">2</span>
+                                <span class="page-box">3</span>
+                                <span style="padding:0 8px;color:#4e444a;">...</span>
+                                <span class="page-box">&gt;</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

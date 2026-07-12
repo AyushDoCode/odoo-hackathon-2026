@@ -1,0 +1,130 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assets | AssetFlow by odoo</title>
+    <link rel="stylesheet" href="assets/pages.css">
+</head>
+<body class="app-page">
+    <div class="app-shell">
+        <aside class="side-nav">
+            <div>
+                <div class="brand">
+                    <div class="brand-row">
+                        <span class="brand-mark square"><img src="assets/icons/nav-org.svg" alt="" style="width:20px;height:18px;"></span>
+                        <div>
+                            <div class="brand-title">AssetFlow</div>
+                            <div class="brand-subtitle caps">Enterprise Management</div>
+                        </div>
+                    </div>
+                </div>
+                <nav class="nav-main">
+                    <ul class="nav-list inset">
+                        <li><a class="nav-link" href="dashboard.html"><img src="assets/icons/nav-dashboard.svg" alt=""><span>Dashboard</span></a></li>
+                        <li><a class="nav-link" href="organization-setup.html"><img src="assets/icons/nav-org.svg" alt=""><span>Organization Setup</span></a></li>
+                        <li><a class="nav-link active" href="assets-directory.html"><img src="assets/icons/nav-assets.svg" alt=""><span>Assets</span></a></li>
+                        <li><a class="nav-link" href="allocation-transfer.html"><img src="assets/icons/nav-allocation.svg" alt=""><span>Allocation &amp; Transfer</span></a></li>
+                        <li><a class="nav-link" href="resource-booking.html"><img src="assets/icons/nav-booking.svg" alt=""><span>Resource Booking</span></a></li>
+                        <li><a class="nav-link" href="maintenance.html"><img src="assets/icons/nav-maintenance.svg" alt=""><span>Maintenance</span></a></li>
+                        <li><a class="nav-link" href="audit.html"><img src="assets/icons/nav-audit.svg" alt=""><span>Audit</span></a></li>
+                        <li><a class="nav-link" href="reports.html"><img src="assets/icons/nav-reports.svg" alt=""><span>Reports</span></a></li>
+                        <li><a class="nav-link" href="notifications.html"><img src="assets/icons/nav-notifications.svg" alt=""><span>Notifications</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="nav-footer">
+                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <header class="topbar">
+                <div class="search-wrap flex">
+                    <input class="search-input" type="text" placeholder="Search assets globally...">
+                    <img class="search-icon" src="assets/icons/ad-search-topbar.svg" alt="">
+                </div>
+                <div class="top-actions">
+                    <button class="icon-button"><img src="assets/icons/ad-bell.svg" alt=""></button>
+                    <button class="icon-button"><img src="assets/icons/ad-help.svg" alt=""></button>
+                    <div style="width:1px;height:32px;background:#e9ecef;"></div>
+                    <div class="user-chip">
+                        <div class="avatar-text">US</div>
+                        <span class="tiny-caps">Admin</span>
+                    </div>
+                </div>
+            </header>
+
+            <section class="page-content">
+                <div class="content-inner stack-24">
+                    <div class="page-header center">
+                        <div>
+                            <h1 class="page-title">Asset Registrations and Directory</h1>
+                            <p class="page-kicker large">Manage and track all organizational assets.</p>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn primary">Register Asset</button>
+                        </div>
+                    </div>
+
+                    <section class="card card-pad">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+                            <div class="search-wrap" style="width:320px;">
+                                <input class="search-input" type="text" placeholder="Search by tag, serial, or QR code...">
+                                <img class="search-icon" src="assets/icons/ad-search-filter.svg" alt="">
+                            </div>
+                            <div class="btn-row">
+                                <button class="btn soft">Category</button>
+                                <button class="btn soft">Status</button>
+                                <button class="btn soft">Department</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="table-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Tag</th>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Location</th>
+                                    <th class="right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="mono muted">AF-0012</td>
+                                    <td><strong>Dell Laptop</strong></td>
+                                    <td class="subtle">Electronics</td>
+                                    <td><span class="badge green">Allocated</span></td>
+                                    <td class="subtle">Bengaluru</td>
+                                    <td class="right">...</td>
+                                </tr>
+                                <tr>
+                                    <td class="mono muted">AF-0062</td>
+                                    <td><strong>Projector</strong></td>
+                                    <td class="subtle">Electronics</td>
+                                    <td><span class="badge red">Maintenance</span></td>
+                                    <td class="subtle">HQ Floor 2</td>
+                                    <td class="right">...</td>
+                                </tr>
+                                <tr>
+                                    <td class="mono muted">AF-0201</td>
+                                    <td><strong>Office chair</strong></td>
+                                    <td class="subtle">Furniture</td>
+                                    <td><span class="badge cyan">Available</span></td>
+                                    <td class="subtle">Warehouse</td>
+                                    <td class="right">...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </section>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
