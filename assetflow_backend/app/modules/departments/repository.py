@@ -3,7 +3,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSessionxt.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.departments.models import Department
 

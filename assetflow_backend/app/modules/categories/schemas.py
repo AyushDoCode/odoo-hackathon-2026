@@ -26,6 +26,7 @@ class AssetCategoryRead(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    created_by: UUID | None
 
 
 class AssetCategoryUpdate(BaseModel):

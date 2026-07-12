@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.categories.models import AssetCategory
 from app.modules.categories.repository import AssetCategoryRepository
-from app.modules.categories.schemas import AssetCategoryCreate, AssetCategoryUpdatefrom app.modules.categories.schemas import AssetCategoryCreate, AssetCategoryUpdate
+from app.modules.categories.schemas import AssetCategoryCreate, AssetCategoryUpdate
 
 
 class AssetCategoryService:

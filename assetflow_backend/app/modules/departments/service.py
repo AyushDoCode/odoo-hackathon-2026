@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.departments.models import Department
 from app.modules.departments.repository import DepartmentRepository
-from app.modules.departments.schemas import DepartmentCreate, DepartmentUpdatefrom app.modules.departments.schemas import DepartmentCreate, DepartmentUpdate
+from app.modules.departments.schemas import DepartmentCreate, DepartmentUpdate
 
 
 class DepartmentService:

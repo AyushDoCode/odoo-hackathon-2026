@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from uuid import UUID
-from datetime import datetimert UUID
+from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -27,6 +27,7 @@ class DepartmentRead(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    created_by: UUID | None
 
 
 class DepartmentUpdate(BaseModel):

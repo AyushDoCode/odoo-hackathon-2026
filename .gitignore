@@ -27,5 +27,6 @@ htmlcov/
 # macOS
 .DS_Store
 
-# Claude MD
+# Claude
 CLAUDE.md
+.claude/

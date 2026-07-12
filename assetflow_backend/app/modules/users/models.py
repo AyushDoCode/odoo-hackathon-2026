@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from uuid import UUID, uuid4
-from datetime import datetimeuuid4
+from uuid import UUID
 
 from sqlalchemy.types import Uuid
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Boolean, DateTime, Enum as SQLEnum, String, func, textfrom sqlalchemy.types import Uuid
+from sqlalchemy import Boolean, Enum as SQLEnum, String, text
 
-from app.database.base import Base
+from app.database.base import AuditMixin, Base
 
 
 class UserRole(StrEnum):
@@ -18,16 +17,10 @@ class UserRole(StrEnum):
     EMPLOYEE = "EMPLOYEE"
 
 
-class User(Base):
+class User(AuditMixin, Base):
     __tablename__ = "users"
     __mapper_args__ = {"eager_defaults": True}
 
-    id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        primary_key=True,
-        default=uuid4,
-        nullable=False,
-    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(
         String(320),
@@ -58,15 +51,4 @@ class User(Base):
         nullable=False,
         default=True,
         server_default=text("1"),
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.utc_timestamp(),
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.utc_timestamp(),
-        server_onupdate=func.utc_timestamp(),
     )
