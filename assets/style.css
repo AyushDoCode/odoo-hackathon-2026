@@ -1,0 +1,184 @@
+/* FONT */
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap");
+
+/* COLORS */
+:root {
+  --color-background: #f0f0f0;
+  --color-text: #333;
+  --color-border: #ccc;
+  --color-placeholder: #777;
+  --color-primary: #007bff;
+  --color-primary-hover: #0056b3;
+  --color-link: #1a73e8;
+  --color-divider: #ddd;
+  --color-social-hover: #f0f0f0;
+  --color-floating-label: #5f6368;
+  --color-white: #fff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "DM Sans", sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: var(--color-background);
+}
+
+.login-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 350px;
+  padding: 3.5rem 2rem 2.2rem;
+  border-radius: 0.9rem;
+  background: var(--color-white);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Gradient blob clipped into the top-right corner of the card */
+.corner-blob {
+  position: absolute;
+  top: -85px;
+  right: -85px;
+  width: 180px;
+  pointer-events: none;
+}
+
+.form-subtitle {
+  font-size: 0.85rem;
+  color: var(--color-floating-label);
+}
+
+.form-title {
+  margin-bottom: 1.8rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* FLOATING-LABEL INPUTS */
+.input-wrapper {
+  position: relative;
+  margin-bottom: 1.3rem;
+}
+
+.input-wrapper .input-field {
+  width: 100%;
+  height: 3rem;
+  padding: 0 1rem;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 0.4rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.input-wrapper .input-label {
+  position: absolute;
+  top: 50%;
+  left: 0.8rem;
+  transform: translateY(-50%);
+  padding: 0 0.3rem;
+  font-size: 0.95rem;
+  color: var(--color-placeholder);
+  background: var(--color-white);
+  pointer-events: none;
+  transition: 0.2s ease;
+}
+
+.input-wrapper .input-field:focus {
+  border-color: var(--color-primary);
+}
+
+/* Float the label onto the top border when focused or filled */
+.input-wrapper .input-field:focus ~ .input-label,
+.input-wrapper .input-field:not(:placeholder-shown) ~ .input-label {
+  top: 0;
+  font-size: 0.75rem;
+  color: var(--color-floating-label);
+}
+
+.input-wrapper .input-field:focus ~ .input-label {
+  color: var(--color-primary);
+}
+
+.input-wrapper .eye-icon {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  color: var(--color-placeholder);
+  cursor: pointer;
+}
+
+/* Keep the eye icon clear of the label animation */
+.password-field {
+  padding-right: 2.8rem;
+}
+
+/* OPTIONS ROW */
+.form-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.4rem;
+  font-size: 0.82rem;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-floating-label);
+  cursor: pointer;
+}
+
+.remember-me input {
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.forgot-password-link {
+  color: var(--color-link);
+}
+
+/* BUTTON */
+.login-button {
+  width: 100%;
+  height: 2.9rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-white);
+  background: var(--color-primary);
+  border: none;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.login-button:hover {
+  background: var(--color-primary-hover);
+}
+
+/* FOOTER */
+.signup-text {
+  margin-top: 1.6rem;
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--color-text);
+}
+
+.signup-text a {
+  color: var(--color-link);
+}
