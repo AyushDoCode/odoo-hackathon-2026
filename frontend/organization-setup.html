@@ -40,8 +40,8 @@
                 </nav>
             </div>
             <div class="nav-footer">
-                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
-                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+                <a class="nav-link" href="organization-setup.html"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="login.html" data-logout><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
             </div>
         </aside>
 
@@ -81,11 +81,11 @@
                         </div>
                     </div>
 
-                    <section class="card r8" style="overflow:hidden;">
-                        <div class="tabs" id="org-tabs">
-                            <button class="tab active" data-target="panel-departments">Departments</button>
-                            <button class="tab" data-target="panel-categories">Categories</button>
-                            <button class="tab" data-target="panel-employees">Employees</button>
+                    <section class="card r8 org-management-card" style="overflow:hidden;">
+                        <div class="tabs org-tabs" id="org-tabs" aria-label="Organization setup views">
+                            <button class="tab active" data-target="panel-departments"><span class="tab-icon"><svg class="small-icon" viewBox="0 0 24 24"><path d="M4 20V8l8-4 8 4v12M8 20v-6h8v6"/></svg></span><span>Departments</span></button>
+                            <button class="tab" data-target="panel-categories"><span class="tab-icon"><svg class="small-icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span><span>Categories</span></button>
+                            <button class="tab" data-target="panel-employees"><span class="tab-icon"><svg class="small-icon" viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-8 0M4 21a8 8 0 0 1 16 0"/></svg></span><span>Employees</span></button>
                         </div>
 
                         <!-- Departments Panel -->
@@ -399,7 +399,7 @@
         }
 
         // Handle Logout
-        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+        document.querySelector('[data-logout]').addEventListener('click', (e) => {
             e.preventDefault();
             window.AssetFlowAPI.logout();
         });

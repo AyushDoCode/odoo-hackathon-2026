@@ -3,102 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | AssetFlow by odoo</title>
+    <title>AssetFlow | Business operations on one platform</title>
     <link rel="stylesheet" href="assets/style.css">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <script src="assets/api.js"></script>
 </head>
-<body>
-    <div class="login-container">
-        <img src="assets/images/blob.svg" alt="" class="corner-blob">
+<body class="landing-page">
+    <header class="landing-nav">
+        <a class="landing-logo" href="index.html"><span class="brand-glyph">AF</span> AssetFlow</a>
+        <nav aria-label="Primary">
+            <a href="#apps">Apps</a>
+            <a href="#solutions">Solutions</a>
+            <a href="#pricing">Pricing</a>
+        </nav>
+        <div class="landing-actions">
+            <a class="link-button" href="login.html">Sign in</a>
+            <a class="solid-button" href="signup.html">Try it free</a>
+        </div>
+    </header>
 
-        <p class="form-subtitle">Please enter your details</p>
-        <h2 class="form-title">Welcome Back</h2>
-
-        <p class="form-error" id="form-error" style="display:none;color:#ba1a1a;font-size:0.85rem;margin-bottom:1rem;"></p>
-
-        <form id="login-form" class="login-form">
-            <div class="input-wrapper">
-                <input type="email" id="email" class="input-field" placeholder=" " required>
-                <label for="email" class="input-label">Email address</label>
+    <main>
+        <section class="hero-section">
+            <div class="hero-copy">
+                <h1>All your business on <span>one platform.</span><br>Simple, efficient, and affordable.</h1>
+                <p>AssetFlow brings inventory, maintenance, audits, bookings, and reports together in one beautifully designed workspace.</p>
+                <div class="hero-actions">
+                    <a class="solid-button large" href="signup.html">Start now - it's free</a>
+                    <a class="outline-button large" href="#solutions">Explore platform</a>
+                </div>
+                <div class="trusted-row" aria-label="Trusted by teams">
+                    <span>Acme Corp</span><span>GlobalTech</span><span>Stellar</span><span>EcoSys</span>
+                </div>
             </div>
-
-            <div class="input-wrapper">
-                <input type="password" id="password" class="input-field password-field" placeholder=" " required>
-                <label for="password" class="input-label">Password</label>
-                <i class='bx bx-hide eye-icon' id="togglePassword"></i>
+            <div class="hero-visual" aria-label="AssetFlow dashboard preview">
+                <div class="floating-note note-left"><strong>Maintenance Due</strong><span>HVAC System A - Today</span></div>
+                <div class="floating-note note-right"><strong>Asset Assigned</strong><span>MacBook Pro to Sarah J</span></div>
+                <div class="product-frame">
+                    <div class="mock-sidebar"></div>
+                    <div class="mock-screen">
+                        <div class="mock-topline"></div>
+                        <div class="mock-metrics"><span></span><span></span><span></span></div>
+                        <div class="mock-chart"><i></i><i></i><i></i><i></i><i></i></div>
+                        <div class="mock-grid"><span></span><span></span><span></span><span></span></div>
+                    </div>
+                </div>
             </div>
+        </section>
 
-            <div class="form-options">
-                <label class="remember-me">
-                    <input type="checkbox"> Remember me
-                </label>
-                <a href="#" class="forgot-password-link" id="forgot-password-link">Forgot password?</a>
+        <section class="growth-section" id="solutions">
+            <div>
+                <h2>Unleash your growth potential</h2>
+                <p>Scale from one stockroom to complex operations without scattered spreadsheets or siloed tools.</p>
+                <ul>
+                    <li>Real-time tracking and automated alerts.</li>
+                    <li>Seamless resource booking and maintenance scheduling.</li>
+                    <li>Audit-ready histories and exportable reports.</li>
+                </ul>
+                <a href="login.html" class="text-link">Discover features</a>
             </div>
+            <div class="warehouse-card">
+                <div class="warehouse-lines"><span></span><span></span><span></span></div>
+                <div class="efficiency-card"><strong>+45%</strong><span>Efficiency gain</span></div>
+            </div>
+        </section>
 
-            <button type="submit" class="login-button" id="login-button">Sign In</button>
-        </form>
+        <section class="apps-section" id="apps">
+            <h2>All your assets, one click away</h2>
+            <p>Everything you need to manage physical operations in a unified platform.</p>
+            <div class="app-icons">
+                <a href="login.html"><span>INV</span>Inventory</a>
+                <a href="login.html"><span>MTN</span>Maintenance</a>
+                <a href="login.html"><span>RBK</span>Resource Booking</a>
+                <a href="login.html"><span>AUD</span>Audits</a>
+                <a href="login.html"><span>ANA</span>Analytics</a>
+                <a href="login.html"><span>ORG</span>Teams</a>
+            </div>
+        </section>
 
-        <p class="signup-text">Don't have an account? <a href="signup.html">Sign up</a></p>
-    </div>
+        <section class="principles-section" id="pricing">
+            <div class="section-heading">
+                <h2>Enterprise software <span>done right</span></h2>
+                <p>No hidden fees. No complicated integrations. Just the workflows your team needs.</p>
+            </div>
+            <div class="principle-grid">
+                <article><span>&lt;/&gt;</span><h3>Open source</h3><p>Inspect the code, customize the workflow, and build exactly what you need.</p></article>
+                <article><span>LOCK</span><h3>No vendor lock-in</h3><p>Your data is yours. Export anytime and keep operations moving.</p></article>
+                <article><span>$</span><h3>Fair pricing</h3><p>Transparent platform pricing for asset operations, reports, and teams.</p></article>
+            </div>
+        </section>
 
-    <script>
-        const passwordField = document.getElementById("password");
-        const togglePassword = document.getElementById("togglePassword");
+        <section class="testimonial-section">
+            <h2>Loved by teams everywhere</h2>
+            <div class="testimonial-grid">
+                <blockquote>"The processing time for asset audits dropped from days to hours."<span>Harry Van Donink, CEO</span></blockquote>
+                <blockquote>"AssetFlow is fast, intuitive, and the maintenance workflow finally feels calm."<span>Sarah Jenkins, Operations Lead</span></blockquote>
+            </div>
+        </section>
+    </main>
 
-        togglePassword.addEventListener("click", () => {
-            const isHidden = passwordField.type === "password";
-            passwordField.type = isHidden ? "text" : "password";
-            togglePassword.classList.toggle("bx-hide", !isHidden);
-            togglePassword.classList.toggle("bx-show", isHidden);
-        });
-
-        // Already signed in? Skip straight to the dashboard.
-        if (window.AssetFlowAPI && window.AssetFlowAPI.getToken()) {
-            window.location.href = "dashboard.html";
-        }
-
-        const errorEl = document.getElementById("form-error");
-        function showError(message) {
-            errorEl.textContent = message;
-            errorEl.style.display = "block";
-        }
-
-        document.getElementById("login-form").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            errorEl.style.display = "none";
-            const button = document.getElementById("login-button");
-            const email = document.getElementById("email").value.trim();
-            const password = passwordField.value;
-
-            button.disabled = true;
-            button.textContent = "Signing in...";
-            try {
-                await window.AssetFlowAPI.login(email, password);
-                window.location.href = "dashboard.html";
-            } catch (err) {
-                showError(err.message || "Sign in failed. Please try again.");
-                button.disabled = false;
-                button.textContent = "Sign In";
-            }
-        });
-
-        document.getElementById("forgot-password-link").addEventListener("click", async (e) => {
-            e.preventDefault();
-            const email = document.getElementById("email").value.trim();
-            if (!email) {
-                showError("Enter your email address above first, then click Forgot password.");
-                return;
-            }
-            try {
-                const result = await window.AssetFlowAPI.postJson("/auth/forgot-password", { email });
-                showError(result.detail);
-                errorEl.style.color = "#00696e";
-            } catch (err) {
-                showError(err.message || "Could not process the request.");
-            }
-        });
-    </script>
-
+    <footer class="landing-footer">
+        <div><a class="landing-logo" href="index.html"><span class="brand-glyph">AF</span> AssetFlow</a><p>Business apps for inventory, maintenance, bookings, audits, and reporting.</p></div>
+        <div><strong>Product</strong><a href="#apps">Apps</a><a href="#pricing">Pricing</a><a href="login.html">Sign in</a></div>
+        <div><strong>Services</strong><a href="#solutions">Solutions</a><a href="signup.html">Start free</a></div>
+        <div><strong>About us</strong><a href="#solutions">Company</a><a href="#pricing">Legal</a><a href="#pricing">Privacy</a></div>
+    </footer>
 </body>
 </html>

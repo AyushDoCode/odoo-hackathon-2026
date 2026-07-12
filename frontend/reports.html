@@ -40,18 +40,19 @@
                 </nav>
             </div>
             <div class="nav-footer">
-                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
-                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+                <a class="nav-link" href="organization-setup.html"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="login.html" data-logout><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
             </div>
         </aside>
 
         <main class="main-area">
             <section class="page-content">
                 <div class="content-inner stack-24">
-                    <div class="page-header">
+                    <div class="page-header reports-header">
                         <div>
                             <h1 class="page-title">Reports &amp; Analytics</h1>
-                            <p class="page-kicker large">Key metrics and asset utilization insights.</p>
+                            <p class="page-kicker large">Live asset utilization, maintenance risk, and booking demand.</p>
+                            <p class="live-stamp" id="reports-updated-at">Loading live data...</p>
                         </div>
                         <button class="btn primary" id="export-button">
                             <svg class="small-icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg>
@@ -61,52 +62,106 @@
 
                     <div id="reports-error" class="muted" style="display:none;padding:24px;"></div>
                     <div id="reports-content">
-                    <div class="grid-12">
-                        <section class="card soft card-pad chart-card col-6">
-                            <h2 style="margin:0 0 16px;font-size:20px;font-weight:500;line-height:28px;">Utilization by department</h2>
-                            <div class="bar-chart" id="utilization-chart">
-                                <div class="chart-labels" id="utilization-labels"></div>
-                            </div>
+                        <section class="report-summary-grid" aria-label="Report summary">
+                            <article class="metric-card">
+                                <span class="metric-label">Active allocations</span>
+                                <strong id="report-active-allocations">-</strong>
+                                <span class="metric-note">Across departments</span>
+                            </article>
+                            <article class="metric-card">
+                                <span class="metric-label">Booked slots</span>
+                                <strong id="report-booked-slots">-</strong>
+                                <span class="metric-note">Grouped by start hour</span>
+                            </article>
+                            <article class="metric-card">
+                                <span class="metric-label">Maintenance requests</span>
+                                <strong id="report-maintenance-requests">-</strong>
+                                <span class="metric-note">Highest frequency assets</span>
+                            </article>
+                            <article class="metric-card alert-metric">
+                                <span class="metric-label">Watchlist assets</span>
+                                <strong id="report-watchlist-assets">-</strong>
+                                <span class="metric-note">Due soon or retiring</span>
+                            </article>
                         </section>
 
-                        <section class="card soft card-pad col-6">
-                            <h2 style="margin:0 0 16px;font-size:20px;font-weight:500;line-height:28px;">Maintenance Frequency</h2>
-                            <div class="small-list" id="maintenance-frequency-list"><p class="muted">Loading...</p></div>
-                        </section>
-                    </div>
+                        <div class="grid-12 reports-grid">
+                            <section class="card card-pad analytics-card col-8">
+                                <div class="chart-head">
+                                    <div>
+                                        <p class="section-eyebrow">Allocation load</p>
+                                        <h2>Utilization by department</h2>
+                                    </div>
+                                    <span class="badge teal" id="utilization-total">0 active</span>
+                                </div>
+                                <div class="metric-bars" id="utilization-chart"></div>
+                            </section>
 
-                    <div class="grid-12">
-                        <section class="card soft card-pad col-3" style="grid-column:span 3;">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-                                <h2 style="margin:0;font-size:20px;font-weight:500;line-height:28px;">Most used<br>assets</h2>
-                                <svg class="inline-icon" viewBox="0 0 24 24" style="color:#00696e;"><path d="M7 17 17 7M9 7h8v8"/></svg>
-                            </div>
-                            <div class="small-list" id="most-used-list"><p class="muted">Loading...</p></div>
-                        </section>
+                            <section class="card card-pad analytics-card col-4">
+                                <div class="chart-head">
+                                    <div>
+                                        <p class="section-eyebrow">Service load</p>
+                                        <h2>Maintenance frequency</h2>
+                                    </div>
+                                </div>
+                                <div class="rank-list" id="maintenance-frequency-list"><p class="muted">Loading...</p></div>
+                            </section>
 
-                        <section class="card soft card-pad col-3" style="grid-column:span 3;">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-                                <h2 style="margin:0;font-size:20px;font-weight:500;line-height:28px;">Idle assets</h2>
-                                <svg class="inline-icon" viewBox="0 0 24 24" style="color:#80747a;"><path d="M8 3h8M8 21h8M9 3c0 5 6 5 6 9s-6 4-6 9M15 3c0 5-6 5-6 9s6 4 6 9"/></svg>
-                            </div>
-                            <div class="small-list" id="idle-list"><p class="muted">Loading...</p></div>
-                        </section>
+                            <section class="card card-pad analytics-card col-12">
+                                <div class="chart-head">
+                                    <div>
+                                        <p class="section-eyebrow">Booking time demand</p>
+                                        <h2>Bookings by hour</h2>
+                                    </div>
+                                    <span class="badge" id="booking-heatmap-summary">Loading...</span>
+                                </div>
+                                <div class="time-chart-wrap">
+                                    <div class="time-chart" id="booking-heatmap-chart" aria-label="Bookings grouped by hour"></div>
+                                </div>
+                            </section>
+                        </div>
 
-                        <section class="card soft card-pad col-6">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
-                                <h2 style="margin:0;font-size:20px;font-weight:500;line-height:28px;">Assets due for maintenance / nearing<br>retirement</h2>
-                                <img src="assets/icons/icon-alert.svg" alt="" style="width:22px;height:19px;">
-                            </div>
-                            <table class="data-table">
-                                <thead>
-                                    <tr><th>ASSET</th><th>STATUS</th></tr>
-                                </thead>
-                                <tbody id="due-soon-tbody">
-                                    <tr><td colspan="2" class="muted" style="text-align:center;padding:24px;">Loading...</td></tr>
-                                </tbody>
-                            </table>
-                        </section>
-                    </div>
+                        <div class="grid-12 reports-grid">
+                            <section class="card card-pad analytics-card col-3">
+                                <div class="chart-head compact">
+                                    <div>
+                                        <p class="section-eyebrow">Demand leaders</p>
+                                        <h2>Most used assets</h2>
+                                    </div>
+                                    <svg class="inline-icon" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg>
+                                </div>
+                                <div class="rank-list" id="most-used-list"><p class="muted">Loading...</p></div>
+                            </section>
+
+                            <section class="card card-pad analytics-card col-3">
+                                <div class="chart-head compact">
+                                    <div>
+                                        <p class="section-eyebrow">Capacity gap</p>
+                                        <h2>Idle assets</h2>
+                                    </div>
+                                    <svg class="inline-icon" viewBox="0 0 24 24"><path d="M8 3h8M8 21h8M9 3c0 5 6 5 6 9s-6 4-6 9M15 3c0 5-6 5-6 9s6 4 6 9"/></svg>
+                                </div>
+                                <div class="rank-list" id="idle-list"><p class="muted">Loading...</p></div>
+                            </section>
+
+                            <section class="card card-pad analytics-card col-6">
+                                <div class="chart-head">
+                                    <div>
+                                        <p class="section-eyebrow">Attention required</p>
+                                        <h2>Maintenance and retirement watchlist</h2>
+                                    </div>
+                                    <img src="assets/icons/icon-alert.svg" alt="" class="head-icon">
+                                </div>
+                                <table class="data-table report-table">
+                                    <thead>
+                                        <tr><th>Asset</th><th>Status</th><th>Date</th></tr>
+                                    </thead>
+                                    <tbody id="due-soon-tbody">
+                                        <tr><td colspan="3" class="muted" style="text-align:center;padding:24px;">Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </section>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -122,10 +177,13 @@
         async function loadReports() {
             try {
                 const summary = await window.AssetFlowAPI.fetchApi('/reports/summary');
+                updateReportTimestamp();
+                renderReportSummary(summary);
                 renderUtilization(summary.utilization_by_department);
                 renderMaintenanceFrequency(summary.maintenance_frequency);
-                renderUsageList('most-used-list', summary.most_used_assets, (u) => `${u.usage_count} bookings`);
-                renderUsageList('idle-list', summary.idle_assets, () => 'unused');
+                renderBookingHeatmap(summary.booking_heatmap);
+                renderUsageList('most-used-list', summary.most_used_assets, (u) => `${u.usage_count} ${plural(u.usage_count, 'booking')}`);
+                renderUsageList('idle-list', summary.idle_assets, () => 'Unused bookable asset');
                 renderDueSoon(summary.due_for_maintenance_or_retirement);
             } catch (error) {
                 console.error('Failed to load reports:', error);
@@ -138,19 +196,48 @@
             }
         }
 
+        function updateReportTimestamp() {
+            const stamp = document.getElementById('reports-updated-at');
+            if (!stamp) return;
+            stamp.textContent = 'Updated ' + new Date().toLocaleString([], {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+            });
+        }
+
+        function renderReportSummary(summary) {
+            const activeAllocations = sum(summary.utilization_by_department, 'active_allocation_count');
+            const bookedSlots = sum(summary.booking_heatmap, 'booking_count');
+            const maintenanceRequests = sum(summary.maintenance_frequency, 'request_count');
+            const watchlistAssets = (summary.due_for_maintenance_or_retirement || []).length;
+
+            setText('report-active-allocations', activeAllocations);
+            setText('report-booked-slots', bookedSlots);
+            setText('report-maintenance-requests', maintenanceRequests);
+            setText('report-watchlist-assets', watchlistAssets);
+        }
+
         function renderUtilization(rows) {
             const chart = document.getElementById('utilization-chart');
-            const labels = document.getElementById('utilization-labels');
+            const total = sum(rows, 'active_allocation_count');
+            setText('utilization-total', `${total} active`);
             if (!rows || rows.length === 0) {
                 chart.innerHTML = '<p class="muted">No allocation data yet.</p>';
                 return;
             }
-            const max = Math.max(...rows.map(r => r.active_allocation_count), 1);
-            chart.innerHTML = rows.map(r =>
-                `<div class="bar" title="${r.department_name || 'Unassigned'}: ${r.active_allocation_count}" style="height:${Math.max(4, Math.round((r.active_allocation_count / max) * 160))}px;"></div>`
-            ).join('') + '<div class="chart-labels" id="utilization-labels">' +
-                rows.map(r => `<span>${(r.department_name || 'Unassigned').substring(0, 8)}</span>`).join('') +
-                '</div>';
+
+            const max = Math.max(...rows.map((r) => r.active_allocation_count), 1);
+            chart.innerHTML = rows.map((r) => {
+                const label = escapeHtml(r.department_name || 'Unassigned');
+                const value = Number(r.active_allocation_count) || 0;
+                const width = Math.max(6, Math.round((value / max) * 100));
+                return `
+                    <div class="metric-bar-row" title="${label}: ${value} active allocations">
+                        <div class="metric-bar-label"><span>${label}</span><strong>${value}</strong></div>
+                        <div class="metric-track"><span style="--value:${width}%"></span></div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function renderMaintenanceFrequency(rows) {
@@ -159,9 +246,61 @@
                 list.innerHTML = '<p class="muted">No maintenance history yet.</p>';
                 return;
             }
-            list.innerHTML = rows.map(r => `
-                <div class="item"><p class="item-title">${r.asset_tag}</p><p class="item-sub">${r.category_name} &bull; ${r.request_count} requests</p></div>
-            `).join('');
+
+            const max = Math.max(...rows.map((r) => r.request_count), 1);
+            list.innerHTML = rows.map((r, index) => {
+                const count = Number(r.request_count) || 0;
+                const width = Math.max(8, Math.round((count / max) * 100));
+                return `
+                    <div class="rank-item">
+                        <div class="rank-line">
+                            <span class="rank-index">${index + 1}</span>
+                            <div>
+                                <p class="item-title">${escapeHtml(r.asset_tag)}</p>
+                                <p class="item-sub">${escapeHtml(r.category_name)} - ${count} ${plural(count, 'request')}</p>
+                            </div>
+                            <strong>${count}</strong>
+                        </div>
+                        <div class="mini-progress"><span style="--value:${width}%"></span></div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderBookingHeatmap(rows) {
+            const chart = document.getElementById('booking-heatmap-chart');
+            const summary = document.getElementById('booking-heatmap-summary');
+            const buckets = Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 }));
+
+            (rows || []).forEach((row) => {
+                const hour = Number(row.hour_of_day);
+                if (Number.isInteger(hour) && hour >= 0 && hour < 24) {
+                    buckets[hour].count += Number(row.booking_count) || 0;
+                }
+            });
+
+            const total = buckets.reduce((acc, bucket) => acc + bucket.count, 0);
+            const max = Math.max(...buckets.map((bucket) => bucket.count), 1);
+            const currentHour = new Date().getHours();
+            summary.textContent = `${total} ${plural(total, 'booking')}`;
+
+            if (total === 0) {
+                chart.innerHTML = '<p class="muted">No booking data yet.</p>';
+                return;
+            }
+
+            chart.innerHTML = buckets.map((bucket) => {
+                const height = bucket.count === 0 ? 3 : Math.max(10, Math.round((bucket.count / max) * 100));
+                const label = bucket.hour % 6 === 0 ? formatHour(bucket.hour) : '';
+                const currentClass = bucket.hour === currentHour ? ' current' : '';
+                return `
+                    <div class="time-bar${currentClass}" style="--bar-height:${height}%" title="${formatHour(bucket.hour)}: ${bucket.count} ${plural(bucket.count, 'booking')}">
+                        <span class="time-bar-fill"></span>
+                        <span class="time-bar-count">${bucket.count || ''}</span>
+                        <span class="time-bar-label">${label}</span>
+                    </div>
+                `;
+            }).join('');
         }
 
         function renderUsageList(elementId, rows, subtitle) {
@@ -170,23 +309,74 @@
                 list.innerHTML = '<p class="muted">No data yet.</p>';
                 return;
             }
-            list.innerHTML = rows.map(r => `
-                <div class="item"><p class="item-title">${r.asset_name} (${r.asset_tag})</p><p class="item-sub">${subtitle(r)}</p></div>
+            list.innerHTML = rows.map((r, index) => `
+                <div class="rank-item compact-row">
+                    <span class="rank-index">${index + 1}</span>
+                    <div>
+                        <p class="item-title">${escapeHtml(r.asset_name)} <span class="asset-tag">${escapeHtml(r.asset_tag)}</span></p>
+                        <p class="item-sub">${escapeHtml(subtitle(r))}</p>
+                    </div>
+                </div>
             `).join('');
         }
 
         function renderDueSoon(rows) {
             const tbody = document.getElementById('due-soon-tbody');
             if (!rows || rows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="2" class="muted" style="text-align:center;padding:24px;">Nothing due soon.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" class="muted" style="text-align:center;padding:24px;">Nothing due soon.</td></tr>';
                 return;
             }
-            tbody.innerHTML = rows.map(r => `
-                <tr>
-                    <td><strong>${r.asset_name}</strong><br><span class="subtle" style="font-size:12px;">${r.asset_tag}</span></td>
-                    <td><span class="badge small ${r.reason === 'due for maintenance' ? 'red' : ''}">${r.reason}</span></td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = rows.map((r) => {
+                const isMaintenance = r.reason === 'due for maintenance';
+                const dueDate = isMaintenance ? r.next_service_due_date : r.purchase_date;
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(r.asset_name)}</strong><br><span class="subtle asset-tag">${escapeHtml(r.asset_tag)}</span></td>
+                        <td><span class="badge small ${isMaintenance ? 'red' : 'warning'}">${escapeHtml(r.reason)}</span></td>
+                        <td>${formatDate(dueDate)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function setText(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        }
+
+        function sum(rows, key) {
+            return (rows || []).reduce((acc, row) => acc + (Number(row[key]) || 0), 0);
+        }
+
+        function plural(count, word) {
+            return Number(count) === 1 ? word : word + 's';
+        }
+
+        function formatHour(hour) {
+            const date = new Date();
+            date.setHours(hour, 0, 0, 0);
+            return date.toLocaleTimeString([], { hour: 'numeric' });
+        }
+
+        function formatDate(value) {
+            if (!value) return 'Not set';
+            const date = new Date(value + 'T00:00:00');
+            if (Number.isNaN(date.getTime())) return 'Not set';
+            return date.toLocaleDateString([], {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+            });
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+            }[char]));
         }
 
         async function exportReport() {
@@ -210,7 +400,7 @@
         }
 
         // Handle Logout
-        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+        document.querySelector('[data-logout]').addEventListener('click', (e) => {
             e.preventDefault();
             window.AssetFlowAPI.logout();
         });

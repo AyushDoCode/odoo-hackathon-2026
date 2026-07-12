@@ -40,8 +40,8 @@
                 </nav>
             </div>
             <div class="nav-footer">
-                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
-                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+                <a class="nav-link" href="organization-setup.html"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="login.html" data-logout><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
             </div>
         </aside>
 
@@ -75,13 +75,13 @@
                                 <svg class="small-icon" viewBox="0 0 24 24"><path d="M4 6h16M8 12h8M10 18h4"/></svg>
                                 FILTER
                             </button>
-                            <button class="btn primary">+ NEW TICKET</button>
+                            <button class="btn primary" id="new-ticket-button">+ New ticket</button>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section class="kanban-wrap">
+            <section class="kanban-wrap maintenance-kanban-wrap">
                 <div class="kanban" id="kanban-board">
                     <!-- Loading skeleton -->
                     <div style="padding:24px;text-align:center;width:100%;" class="muted">Loading maintenance board...</div>
@@ -90,6 +90,45 @@
 
             <div class="help-text">Approving a card moves the asset to under maintenance, resolving return it to available.</div>
         </main>
+    </div>
+    <div class="modal-backdrop" id="ticket-modal" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="ticket-modal-title">
+            <div class="modal-head">
+                <div>
+                    <p class="section-eyebrow">Maintenance request</p>
+                    <h2 id="ticket-modal-title">Open a new ticket</h2>
+                </div>
+                <button class="icon-button modal-close" type="button" id="ticket-modal-close" aria-label="Close ticket form">x</button>
+            </div>
+            <form id="ticket-form" class="modal-form">
+                <div class="field">
+                    <label for="ticket-asset">Asset</label>
+                    <select class="input-box" id="ticket-asset" required></select>
+                </div>
+                <div class="field">
+                    <label for="ticket-priority">Priority</label>
+                    <select class="input-box" id="ticket-priority" required>
+                        <option value="LOW">Low</option>
+                        <option value="MEDIUM" selected>Medium</option>
+                        <option value="HIGH">High</option>
+                        <option value="URGENT">Urgent</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="ticket-issue">Issue</label>
+                    <textarea class="input-box textarea-box" id="ticket-issue" placeholder="Describe what is broken, where it is, and what changed." required></textarea>
+                </div>
+                <div class="field">
+                    <label for="ticket-photo-url">Photo URL</label>
+                    <input class="input-box" id="ticket-photo-url" type="url" placeholder="Optional evidence link">
+                </div>
+                <p class="form-status" id="ticket-form-status" hidden></p>
+                <div class="modal-actions">
+                    <button class="btn soft" type="button" id="ticket-modal-cancel">Cancel</button>
+                    <button class="btn primary" type="submit" id="ticket-submit-button">Create ticket</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -102,7 +141,13 @@
                 document.getElementById('user-chip-role').textContent = user.role || 'User';
             }
 
-            document.querySelector('.btn.primary').addEventListener('click', raiseTicket);
+            document.getElementById('new-ticket-button').addEventListener('click', openTicketModal);
+            document.getElementById('ticket-form').addEventListener('submit', createTicketFromModal);
+            document.getElementById('ticket-modal-close').addEventListener('click', closeTicketModal);
+            document.getElementById('ticket-modal-cancel').addEventListener('click', closeTicketModal);
+            document.getElementById('ticket-modal').addEventListener('click', (event) => {
+                if (event.target.id === 'ticket-modal') closeTicketModal();
+            });
 
             await loadBoard();
         });
@@ -187,28 +232,69 @@
             }
         }
 
-        async function raiseTicket() {
+        async function openTicketModal() {
+            const select = document.getElementById('ticket-asset');
+            setTicketStatus('', false);
+            document.getElementById('ticket-issue').value = '';
+            document.getElementById('ticket-photo-url').value = '';
+            document.getElementById('ticket-priority').value = 'MEDIUM';
+            select.innerHTML = '<option>Loading assets...</option>';
+            document.getElementById('ticket-modal').hidden = false;
             try {
                 const assets = await window.AssetFlowAPI.fetchApi('/assets');
                 if (!assets || assets.length === 0) {
-                    window.alert('No assets available. Register one first.');
+                    select.innerHTML = '<option value="">No assets available</option>';
+                    setTicketStatus('No assets are available. Register an asset first.');
                     return;
                 }
-                const names = assets.map((a, i) => `${i + 1}. ${a.tag} - ${a.name}`).join('\n');
-                const choice = window.prompt(`Which asset needs maintenance? Enter the number:\n${names}`);
-                const asset = assets[parseInt(choice, 10) - 1];
-                if (!asset) return;
-                const issue = window.prompt('Describe the issue:');
-                if (!issue) return;
-                const priority = (window.prompt('Priority: LOW, MEDIUM, HIGH, or URGENT?', 'MEDIUM') || 'MEDIUM').toUpperCase();
-
-                await window.AssetFlowAPI.postJson('/maintenance', { asset_id: asset.id, issue, priority });
-                await loadBoard();
+                select.innerHTML = assets.map(asset => `<option value="${asset.id}">${asset.tag} - ${asset.name}</option>`).join('');
+                select.focus();
             } catch (error) {
-                window.alert('Failed to raise ticket: ' + error.message);
+                select.innerHTML = '<option value="">Could not load assets</option>';
+                setTicketStatus('Could not load assets: ' + error.message);
             }
         }
 
+        function closeTicketModal() {
+            document.getElementById('ticket-modal').hidden = true;
+        }
+
+        function setTicketStatus(message, isError = true) {
+            const status = document.getElementById('ticket-form-status');
+            status.textContent = message;
+            status.dataset.tone = isError ? 'error' : 'success';
+            status.hidden = !message;
+        }
+
+        async function createTicketFromModal(event) {
+            event.preventDefault();
+            const assetId = document.getElementById('ticket-asset').value;
+            const issue = document.getElementById('ticket-issue').value.trim();
+            const priority = document.getElementById('ticket-priority').value;
+            const photoUrl = document.getElementById('ticket-photo-url').value.trim() || null;
+            if (!assetId || !issue) {
+                setTicketStatus('Choose an asset and describe the issue.');
+                return;
+            }
+            const button = document.getElementById('ticket-submit-button');
+            button.disabled = true;
+            button.textContent = 'Creating...';
+            try {
+                await window.AssetFlowAPI.postJson('/maintenance', {
+                    asset_id: assetId,
+                    issue,
+                    priority,
+                    photo_url: photoUrl,
+                });
+                closeTicketModal();
+                await loadBoard();
+            } catch (error) {
+                setTicketStatus('Failed to raise ticket: ' + error.message);
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Create ticket';
+            }
+        }
         async function approveTicket(id) {
             try {
                 await window.AssetFlowAPI.postJson(`/maintenance/${id}/approve`);
@@ -260,7 +346,7 @@
         }
 
         // Handle Logout
-        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+        document.querySelector('[data-logout]').addEventListener('click', (e) => {
             e.preventDefault();
             window.AssetFlowAPI.logout();
         });

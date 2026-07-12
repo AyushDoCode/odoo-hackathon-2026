@@ -40,8 +40,8 @@
                 </nav>
             </div>
             <div class="nav-footer">
-                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
-                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+                <a class="nav-link" href="organization-setup.html"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="login.html" data-logout><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
             </div>
         </aside>
 
@@ -383,7 +383,7 @@
         }
 
         // Handle Logout
-        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+        document.querySelector('[data-logout]').addEventListener('click', (e) => {
             e.preventDefault();
             window.AssetFlowAPI.logout();
         });

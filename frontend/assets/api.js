@@ -40,13 +40,13 @@
     // authenticated page, before rendering any data.
     function requireAuth() {
         if (!getToken()) {
-            window.location.href = "index.html";
+            window.location.href = "login.html";
         }
     }
 
     function logout() {
         clearSession();
-        window.location.href = "index.html";
+        window.location.href = "login.html";
     }
 
     // Generic fetch wrapper: prefixes the API base URL, attaches the bearer token,
@@ -72,7 +72,7 @@
 
         if (response.status === 401) {
             clearSession();
-            window.location.href = "index.html";
+            window.location.href = "login.html";
             throw new Error("Session expired. Please sign in again.");
         }
 

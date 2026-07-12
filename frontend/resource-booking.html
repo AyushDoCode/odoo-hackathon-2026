@@ -40,8 +40,8 @@
                 </nav>
             </div>
             <div class="nav-footer">
-                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
-                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+                <a class="nav-link" href="organization-setup.html"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="login.html" data-logout><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
             </div>
         </aside>
 
@@ -75,9 +75,9 @@
                         </div>
                     </div>
 
-                    <div class="booking-layout">
+                    <div class="booking-layout booking-layout-pro">
                         <div class="stack-24">
-                            <section class="resource-card">
+                            <section class="resource-card booking-resource-card">
                                 <div style="position:relative;display:flex;justify-content:space-between;align-items:flex-start;">
                                     <div>
                                         <span class="badge teal" id="resource-bookable-badge"><span class="status-dot"></span>Bookable</span>
@@ -100,7 +100,7 @@
                             </section>
                         </div>
 
-                        <section class="schedule">
+                        <section class="schedule booking-schedule-card">
                             <div class="schedule-head">
                                 <div style="display:flex;gap:12px;align-items:flex-start;">
                                     <img src="assets/icons/nav-booking.svg" alt="" style="width:21px;height:23px;margin-top:4px;">
@@ -111,7 +111,7 @@
                                 </div>
                             </div>
 
-                            <div id="bookings-list" class="stack-24" style="gap:12px;padding:20px;">
+                            <div id="bookings-list" class="stack-24 booking-list">
                                 <p class="muted">Select a resource above to see its schedule.</p>
                             </div>
                         </section>
@@ -119,6 +119,42 @@
                 </div>
             </section>
         </main>
+    </div>
+    <div class="modal-backdrop" id="booking-modal" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="booking-modal-title">
+            <div class="modal-head">
+                <div>
+                    <p class="section-eyebrow">Resource booking</p>
+                    <h2 id="booking-modal-title">Book a slot</h2>
+                </div>
+                <button class="icon-button modal-close" type="button" id="booking-modal-close" aria-label="Close booking form">x</button>
+            </div>
+            <form id="booking-form" class="modal-form">
+                <div class="field">
+                    <label for="booking-resource-name">Resource</label>
+                    <input class="input-box" id="booking-resource-name" type="text" readonly>
+                </div>
+                <div class="modal-grid-2">
+                    <div class="field">
+                        <label for="booking-start">Start time</label>
+                        <input class="input-box" id="booking-start" type="datetime-local" required>
+                    </div>
+                    <div class="field">
+                        <label for="booking-end">End time</label>
+                        <input class="input-box" id="booking-end" type="datetime-local" required>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="booking-purpose">Purpose</label>
+                    <textarea class="input-box textarea-box" id="booking-purpose" placeholder="Team meeting, asset handoff, training session..."></textarea>
+                </div>
+                <p class="form-status" id="booking-form-status" hidden></p>
+                <div class="modal-actions">
+                    <button class="btn soft" type="button" id="booking-modal-cancel">Cancel</button>
+                    <button class="btn primary" type="submit" id="booking-submit-button">Create booking</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -137,7 +173,13 @@
                 renderResourceInfo();
                 loadBookings();
             });
-            document.getElementById('book-slot-button').addEventListener('click', bookSlot);
+            document.getElementById('book-slot-button').addEventListener('click', openBookingModal);
+            document.getElementById('booking-form').addEventListener('submit', createBookingFromModal);
+            document.getElementById('booking-modal-close').addEventListener('click', closeBookingModal);
+            document.getElementById('booking-modal-cancel').addEventListener('click', closeBookingModal);
+            document.getElementById('booking-modal').addEventListener('click', (event) => {
+                if (event.target.id === 'booking-modal') closeBookingModal();
+            });
 
             await loadResources();
         });
@@ -149,6 +191,7 @@
                 const select = document.getElementById('resource-select');
                 if (bookableResources.length === 0) {
                     select.innerHTML = '<option>No bookable resources</option>';
+                    document.getElementById('book-slot-button').disabled = true;
                     document.getElementById('bookings-list').innerHTML = '<p class="muted">No assets are marked as shared/bookable yet. Register one and check "shared/bookable" from the Assets directory.</p>';
                     return;
                 }
@@ -190,12 +233,12 @@
                     if (b.status === 'CANCELLED') badgeClass += ' red';
                     if (b.status === 'COMPLETED') badgeClass = 'badge';
                     return `
-                        <div class="event-block" style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                        <div class="booking-event-card">
                             <div>
                                 <p class="item-title">${formatRange(b.start_time, b.end_time)}</p>
                                 <p class="item-sub">${b.purpose || 'No purpose specified'}</p>
                             </div>
-                            <div style="display:flex;align-items:center;gap:8px;">
+                            <div class="booking-event-actions">
                                 <span class="${badgeClass}">${b.status}</span>
                                 ${canCancel ? `<button class="btn soft" style="padding:4px 8px;font-size:11px;" onclick="cancelBooking('${b.id}')">Cancel</button>` : ''}
                             </div>
@@ -217,21 +260,54 @@
             return `${dateStr}, ${startStr} - ${endStr}`;
         }
 
-        async function bookSlot() {
-            if (!selectedResourceId) { window.alert('Select a resource first.'); return; }
-            const startInput = window.prompt('Start time (YYYY-MM-DD HH:MM, e.g. 2026-07-15 14:00):');
-            if (!startInput) return;
-            const endInput = window.prompt('End time (YYYY-MM-DD HH:MM):');
-            if (!endInput) return;
-            const purpose = window.prompt('Purpose (optional):') || null;
-
-            const start = new Date(startInput.replace(' ', 'T'));
-            const end = new Date(endInput.replace(' ', 'T'));
-            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                window.alert('Could not parse those times. Use the format 2026-07-15 14:00.');
+        function openBookingModal() {
+            if (!selectedResourceId) {
+                window.alert('Select a resource first.');
                 return;
             }
+            const resource = bookableResources.find(a => a.id === selectedResourceId);
+            if (!resource) return;
+            document.getElementById('booking-resource-name').value = `${resource.tag} - ${resource.name}`;
+            const start = new Date(Date.now() + 60 * 60 * 1000);
+            start.setMinutes(0, 0, 0);
+            const end = new Date(start.getTime() + 60 * 60 * 1000);
+            document.getElementById('booking-start').value = toDateTimeLocal(start);
+            document.getElementById('booking-end').value = toDateTimeLocal(end);
+            document.getElementById('booking-purpose').value = '';
+            setBookingStatus('', false);
+            document.getElementById('booking-modal').hidden = false;
+            document.getElementById('booking-start').focus();
+        }
 
+        function closeBookingModal() {
+            document.getElementById('booking-modal').hidden = true;
+        }
+
+        function setBookingStatus(message, isError = true) {
+            const status = document.getElementById('booking-form-status');
+            status.textContent = message;
+            status.dataset.tone = isError ? 'error' : 'success';
+            status.hidden = !message;
+        }
+
+        async function createBookingFromModal(event) {
+            event.preventDefault();
+            const startValue = document.getElementById('booking-start').value;
+            const endValue = document.getElementById('booking-end').value;
+            const purpose = document.getElementById('booking-purpose').value.trim() || null;
+            const start = new Date(startValue);
+            const end = new Date(endValue);
+            if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+                setBookingStatus('Choose a valid start and end time.');
+                return;
+            }
+            if (end <= start) {
+                setBookingStatus('End time must be after start time.');
+                return;
+            }
+            const button = document.getElementById('booking-submit-button');
+            button.disabled = true;
+            button.textContent = 'Creating...';
             try {
                 await window.AssetFlowAPI.postJson('/bookings', {
                     resource_id: selectedResourceId,
@@ -239,12 +315,20 @@
                     end_time: end.toISOString(),
                     purpose,
                 });
+                closeBookingModal();
                 await loadBookings();
             } catch (error) {
-                window.alert('Failed to book slot: ' + error.message);
+                setBookingStatus('Failed to book slot: ' + error.message);
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Create booking';
             }
         }
 
+        function toDateTimeLocal(date) {
+            const pad = (value) => String(value).padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        }
         async function cancelBooking(bookingId) {
             if (!window.confirm('Cancel this booking?')) return;
             try {
@@ -256,7 +340,7 @@
         }
 
         // Handle Logout
-        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+        document.querySelector('[data-logout]').addEventListener('click', (e) => {
             e.preventDefault();
             window.AssetFlowAPI.logout();
         });

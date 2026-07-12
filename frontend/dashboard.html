@@ -41,8 +41,8 @@
                 </nav>
             </div>
             <div class="nav-footer">
-                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
-                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+                <a class="nav-link" href="organization-setup.html"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="login.html" data-logout><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
             </div>
         </aside>
 
@@ -68,7 +68,8 @@
                     <div class="page-header">
                         <div>
                             <h1 class="page-title">Dashboard</h1>
-                            <p class="page-kicker">Overview and quick actions for AssetFlow.</p>
+                            <p class="page-kicker">Live operations snapshot and quick actions for AssetFlow.</p>
+                            <p class="live-stamp" id="dashboard-updated-at">Loading live data...</p>
                         </div>
                         <div class="btn-row">
                             <a class="btn soft" href="assets-directory.html">Register Asset</a>
@@ -78,36 +79,36 @@
                     </div>
 
                     <section class="grid-12">
-                        <div class="col-4 card card-pad">
+                        <div class="col-4 card card-pad stat-card">
                             <p class="item-sub">Available</p>
                             <p class="page-title" id="stat-available">-</p>
                         </div>
-                        <div class="col-4 card card-pad">
+                        <div class="col-4 card card-pad stat-card">
                             <p class="item-sub">Allocated</p>
                             <p class="page-title" id="stat-allocated">-</p>
                         </div>
-                        <div class="col-4 card card-pad">
+                        <div class="col-4 card card-pad stat-card">
                             <p class="item-sub">Active Bookings</p>
                             <p class="page-title" id="stat-active-bookings">-</p>
                         </div>
                     </section>
 
                     <section class="grid-12">
-                        <div class="col-4 card card-pad">
+                        <div class="col-4 card card-pad stat-card">
                             <p class="item-sub">Pending Transfers</p>
                             <p class="page-title" id="stat-pending-transfers">-</p>
                         </div>
-                        <div class="col-4 card card-pad">
+                        <div class="col-4 card card-pad stat-card">
                             <p class="item-sub">Upcoming Returns</p>
                             <p class="page-title" id="stat-upcoming-returns">-</p>
                         </div>
-                        <div class="col-4 card card-pad">
+                        <div class="col-4 card card-pad stat-card">
                             <p class="item-sub">Maintenance Today</p>
                             <p class="page-title" id="stat-maintenance-today">-</p>
                         </div>
                     </section>
 
-                    <section class="alert">
+                    <section class="alert dashboard-alert responsive-section">
                         <img src="assets/icons/icon-alert.svg" alt="">
                         <div>
                             <h4><span id="stat-overdue-returns">0</span> assets overdue for return</h4>
@@ -159,6 +160,13 @@
                 document.getElementById('stat-pending-transfers').textContent = data.pending_transfers;
                 document.getElementById('stat-upcoming-returns').textContent = data.upcoming_returns;
                 document.getElementById('stat-maintenance-today').textContent = data.maintenance_today;
+                const dashboardStamp = document.getElementById('dashboard-updated-at');
+                if (dashboardStamp) {
+                    dashboardStamp.textContent = 'Updated ' + new Date().toLocaleString([], {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                    });
+                }
                 
                 // Alert section
                 const overdueEl = document.getElementById('stat-overdue-returns');
@@ -186,7 +194,7 @@
         });
 
         // Handle Logout
-        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+        document.querySelector('[data-logout]').addEventListener('click', (e) => {
             e.preventDefault();
             window.AssetFlowAPI.logout();
         });
