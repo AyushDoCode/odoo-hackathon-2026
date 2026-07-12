@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resource Booking | AssetFlow by odoo</title>
+    <link rel="stylesheet" href="assets/pages.css">
+    <script src="assets/api.js"></script>
+    <script>
+        if (window.AssetFlowAPI) {
+            window.AssetFlowAPI.requireAuth();
+        }
+    </script>
+</head>
+<body class="app-page">
+    <div class="app-shell">
+        <aside class="side-nav">
+            <div>
+                <div class="brand">
+                    <div class="brand-row">
+                        <span class="brand-mark square"><img src="assets/icons/nav-org.svg" alt="" style="width:20px;height:18px;"></span>
+                        <div>
+                            <div class="brand-title">AssetFlow</div>
+                            <div class="brand-subtitle caps">Enterprise Management</div>
+                        </div>
+                    </div>
+                </div>
+                <nav class="nav-main">
+                    <ul class="nav-list inset">
+                        <li><a class="nav-link" href="dashboard.html"><img src="assets/icons/nav-dashboard.svg" alt=""><span>Dashboard</span></a></li>
+                        <li><a class="nav-link" href="organization-setup.html"><img src="assets/icons/nav-org.svg" alt=""><span>Organization Setup</span></a></li>
+                        <li><a class="nav-link" href="assets-directory.html"><img src="assets/icons/nav-assets.svg" alt=""><span>Assets</span></a></li>
+                        <li><a class="nav-link" href="allocation-transfer.html"><img src="assets/icons/nav-allocation.svg" alt=""><span>Allocation &amp; Transfer</span></a></li>
+                        <li><a class="nav-link active" href="resource-booking.html"><img src="assets/icons/nav-booking.svg" alt=""><span>Resource Booking</span></a></li>
+                        <li><a class="nav-link" href="maintenance.html"><img src="assets/icons/nav-maintenance.svg" alt=""><span>Maintenance</span></a></li>
+                        <li><a class="nav-link" href="audit.html"><img src="assets/icons/nav-audit.svg" alt=""><span>Audit</span></a></li>
+                        <li><a class="nav-link" href="reports.html"><img src="assets/icons/nav-reports.svg" alt=""><span>Reports</span></a></li>
+                        <li><a class="nav-link" href="notifications.html"><img src="assets/icons/nav-notifications.svg" alt=""><span>Notifications</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="nav-footer">
+                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <header class="topbar grey">
+                <div class="search-wrap flex">
+                    <input class="search-input" type="text" placeholder="Search resources...">
+                    <img class="search-icon" src="assets/icons/icon-search.svg" alt="">
+                </div>
+                <div class="top-actions">
+                    <button class="icon-button"><img src="assets/icons/icon-bell.svg" alt=""><span class="dot"></span></button>
+                    <button class="icon-button"><img src="assets/icons/icon-help.svg" alt=""></button>
+                    <div style="width:1px;height:32px;background:#e9ecef;"></div>
+                    <div class="user-chip" id="user-chip-container">
+                        <div class="avatar-text" style="width:32px;height:32px;border-radius:12px;font-size:11px;background:#e9ecef;color:#57344f;">US</div>
+                        <span class="tiny-caps" style="color:#57344f;" id="user-chip-name">User</span>
+                    </div>
+                </div>
+            </header>
+
+            <section class="page-content">
+                <div class="content-inner stack-24">
+                    <div class="page-header center">
+                        <div>
+                            <h1 class="page-title hero">Resource Booking</h1>
+                            <p class="page-kicker large">Manage shared workspaces and equipment.</p>
+                        </div>
+                        <div class="btn-row">
+                            <select class="btn outline" id="resource-select" style="min-width:220px;"></select>
+                            <button class="btn primary" id="book-slot-button">+ Book a Slot</button>
+                        </div>
+                    </div>
+
+                    <div class="booking-layout">
+                        <div class="stack-24">
+                            <section class="resource-card">
+                                <div style="position:relative;display:flex;justify-content:space-between;align-items:flex-start;">
+                                    <div>
+                                        <span class="badge teal" id="resource-bookable-badge"><span class="status-dot"></span>Bookable</span>
+                                        <h2 class="resource-title" id="resource-title">Select a resource</h2>
+                                    </div>
+                                    <div style="display:grid;width:42px;height:48px;place-items:center;border:1px solid var(--border);border-radius:8px;background:#f3f4f5;">
+                                        <img src="assets/icons/nav-booking.svg" alt="" style="width:21px;height:21px;">
+                                    </div>
+                                </div>
+                                <div class="resource-stats">
+                                    <div class="stat-inline">
+                                        <span class="stat-icon"><svg class="small-icon" viewBox="0 0 24 24"><path d="M4 20a8 8 0 0 1 16 0"/><circle cx="12" cy="8" r="4"/></svg></span>
+                                        <div><p class="item-sub">Tag</p><p class="item-title" style="font-size:16px;" id="resource-tag">-</p></div>
+                                    </div>
+                                    <div class="stat-inline">
+                                        <span class="stat-icon"><svg class="small-icon" viewBox="0 0 24 24"><path d="m12 3 8 5-8 5-8-5z"/><path d="m4 13 8 5 8-5"/></svg></span>
+                                        <div><p class="item-sub">Location</p><p class="item-title" style="font-size:16px;" id="resource-location">-</p></div>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+
+                        <section class="schedule">
+                            <div class="schedule-head">
+                                <div style="display:flex;gap:12px;align-items:flex-start;">
+                                    <img src="assets/icons/nav-booking.svg" alt="" style="width:21px;height:23px;margin-top:4px;">
+                                    <div>
+                                        <h2 class="schedule-title">Upcoming &amp; Ongoing Bookings</h2>
+                                        <p class="item-sub">Times shown in your local timezone.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="bookings-list" class="stack-24" style="gap:12px;padding:20px;">
+                                <p class="muted">Select a resource above to see its schedule.</p>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let bookableResources = [];
+        let selectedResourceId = null;
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const user = window.AssetFlowAPI.getUser();
+            if (user && user.name) {
+                document.querySelector('#user-chip-container .avatar-text').textContent = user.name.substring(0, 2).toUpperCase();
+                document.getElementById('user-chip-name').textContent = user.name;
+            }
+
+            document.getElementById('resource-select').addEventListener('change', (e) => {
+                selectedResourceId = e.target.value;
+                renderResourceInfo();
+                loadBookings();
+            });
+            document.getElementById('book-slot-button').addEventListener('click', bookSlot);
+
+            await loadResources();
+        });
+
+        async function loadResources() {
+            try {
+                const assets = await window.AssetFlowAPI.fetchApi('/assets');
+                bookableResources = (assets || []).filter(a => a.is_bookable);
+                const select = document.getElementById('resource-select');
+                if (bookableResources.length === 0) {
+                    select.innerHTML = '<option>No bookable resources</option>';
+                    document.getElementById('bookings-list').innerHTML = '<p class="muted">No assets are marked as shared/bookable yet. Register one and check "shared/bookable" from the Assets directory.</p>';
+                    return;
+                }
+                select.innerHTML = bookableResources.map(a => `<option value="${a.id}">${a.tag} - ${a.name}</option>`).join('');
+                selectedResourceId = bookableResources[0].id;
+                renderResourceInfo();
+                await loadBookings();
+            } catch (error) {
+                console.error('Failed to load resources:', error);
+                document.getElementById('bookings-list').innerHTML = '<p style="color:red;">Error loading resources.</p>';
+            }
+        }
+
+        function renderResourceInfo() {
+            const resource = bookableResources.find(a => a.id === selectedResourceId);
+            if (!resource) return;
+            document.getElementById('resource-title').textContent = resource.name;
+            document.getElementById('resource-tag').textContent = resource.tag;
+            document.getElementById('resource-location').textContent = resource.location || 'Unknown';
+            document.getElementById('resource-bookable-badge').innerHTML = `<span class="status-dot"></span>${resource.status}`;
+        }
+
+        async function loadBookings() {
+            const list = document.getElementById('bookings-list');
+            list.innerHTML = '<p class="muted">Loading bookings...</p>';
+            try {
+                const bookings = await window.AssetFlowAPI.fetchApi(`/bookings/resource/${selectedResourceId}`);
+                if (!bookings || bookings.length === 0) {
+                    list.innerHTML = '<p class="muted">No bookings for this resource yet.</p>';
+                    return;
+                }
+                const sorted = bookings.slice().sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+                const currentUser = window.AssetFlowAPI.getUser();
+                list.innerHTML = sorted.map(b => {
+                    const canManage = currentUser && (b.user_id === currentUser.id || ['ADMIN', 'ASSET_MANAGER'].includes(currentUser.role));
+                    const canCancel = canManage && (b.status === 'UPCOMING' || b.status === 'ONGOING');
+                    let badgeClass = 'badge';
+                    if (b.status === 'ONGOING') badgeClass += ' teal';
+                    if (b.status === 'CANCELLED') badgeClass += ' red';
+                    if (b.status === 'COMPLETED') badgeClass = 'badge';
+                    return `
+                        <div class="event-block" style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                            <div>
+                                <p class="item-title">${formatRange(b.start_time, b.end_time)}</p>
+                                <p class="item-sub">${b.purpose || 'No purpose specified'}</p>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span class="${badgeClass}">${b.status}</span>
+                                ${canCancel ? `<button class="btn soft" style="padding:4px 8px;font-size:11px;" onclick="cancelBooking('${b.id}')">Cancel</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load bookings:', error);
+                list.innerHTML = '<p style="color:red;">Error loading bookings.</p>';
+            }
+        }
+
+        function formatRange(start, end) {
+            const s = new Date(start);
+            const e = new Date(end);
+            const dateStr = s.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            const startStr = s.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+            const endStr = e.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+            return `${dateStr}, ${startStr} - ${endStr}`;
+        }
+
+        async function bookSlot() {
+            if (!selectedResourceId) { window.alert('Select a resource first.'); return; }
+            const startInput = window.prompt('Start time (YYYY-MM-DD HH:MM, e.g. 2026-07-15 14:00):');
+            if (!startInput) return;
+            const endInput = window.prompt('End time (YYYY-MM-DD HH:MM):');
+            if (!endInput) return;
+            const purpose = window.prompt('Purpose (optional):') || null;
+
+            const start = new Date(startInput.replace(' ', 'T'));
+            const end = new Date(endInput.replace(' ', 'T'));
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                window.alert('Could not parse those times. Use the format 2026-07-15 14:00.');
+                return;
+            }
+
+            try {
+                await window.AssetFlowAPI.postJson('/bookings', {
+                    resource_id: selectedResourceId,
+                    start_time: start.toISOString(),
+                    end_time: end.toISOString(),
+                    purpose,
+                });
+                await loadBookings();
+            } catch (error) {
+                window.alert('Failed to book slot: ' + error.message);
+            }
+        }
+
+        async function cancelBooking(bookingId) {
+            if (!window.confirm('Cancel this booking?')) return;
+            try {
+                await window.AssetFlowAPI.postJson(`/bookings/${bookingId}/cancel`);
+                await loadBookings();
+            } catch (error) {
+                window.alert('Failed to cancel: ' + error.message);
+            }
+        }
+
+        // Handle Logout
+        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.AssetFlowAPI.logout();
+        });
+    </script>
+</body>
+</html>
