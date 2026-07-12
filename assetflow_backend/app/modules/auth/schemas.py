@@ -41,7 +41,6 @@ class ForgotPasswordResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     detail: str
-    reset_token: str
 
 
 class ResetPasswordRequest(BaseModel):

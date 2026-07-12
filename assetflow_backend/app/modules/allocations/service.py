@@ -133,7 +133,7 @@ class AllocationService:
         return allocation
 
     async def approve_transfer(self, allocation_id: UUID, *, actor: User) -> Allocation:
-        allocation = await self.repository.get_by_id(allocation_id)
+        allocation = await self.repository.get_by_id_for_update(allocation_id)
         if allocation is None or allocation.status != AllocationStatus.TRANSFER_REQUESTED:
             raise AllocationError("Allocation has no pending transfer request")
 
@@ -256,13 +256,15 @@ class AllocationService:
         await self.session.refresh(allocation)
         return allocation
 
-    async def close_for_maintenance(self, asset_id: UUID, *, actor_id: UUID) -> None:
+    async def close_for_maintenance(
+        self, asset_id: UUID, *, actor_id: UUID, reason: str = "Automatically checked in for approved maintenance"
+    ) -> None:
         allocation = await self.repository.get_active_for_asset(asset_id)
         if allocation is None:
             return
         allocation.status = AllocationStatus.RETURNED
         allocation.returned_at = datetime.now(UTC)
-        allocation.return_condition = "Automatically checked in for approved maintenance"
+        allocation.return_condition = reason
         allocation.approved_by = actor_id
         await self.session.flush()
 

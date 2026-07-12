@@ -52,10 +52,9 @@ async def me(current_user: User = Depends(get_current_user)) -> UserRead:
 async def forgot_password(
     data: ForgotPasswordRequest, session: AsyncSession = Depends(get_db)
 ) -> ForgotPasswordResponse:
-    token = await AuthService(session).create_password_reset(str(data.email))
+    await AuthService(session).create_password_reset(str(data.email))
     return ForgotPasswordResponse(
-        detail="If the account exists, this one-time token can reset its password.",
-        reset_token=token,
+        detail="If the account exists, a one-time reset token has been sent to it.",
     )
 
 

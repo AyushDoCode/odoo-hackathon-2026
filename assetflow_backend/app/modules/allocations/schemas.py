@@ -28,7 +28,7 @@ class TransferRequestCreate(BaseModel):
 class ReturnRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    return_condition: str | None = Field(default=None, max_length=255)
+    return_condition: str = Field(min_length=1, max_length=255)
 
 
 class AllocationRead(BaseModel):

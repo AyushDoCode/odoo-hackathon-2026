@@ -29,6 +29,22 @@ async def _validate_head(session: AsyncSession, head_id: UUID | None) -> None:
         )
 
 
+async def _validate_parent(
+    session: AsyncSession, department_id: UUID, parent_department_id: UUID | None
+) -> None:
+    """Walks the proposed parent's ancestor chain to reject cycles beyond the
+    immediate self-parent case (e.g. A -> B -> A, or longer chains)."""
+    service = DepartmentService(session)
+    current_id = parent_department_id
+    while current_id is not None:
+        if current_id == department_id:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT, "Department hierarchy cannot contain a cycle"
+            )
+        parent = await service.get_department(current_id)
+        current_id = parent.parent_department_id if parent is not None else None
+
+
 @router.get("", response_model=list[DepartmentRead])
 async def list_departments(
     offset: int = Query(default=0, ge=0),
@@ -76,10 +92,17 @@ async def update_department(
     row = await service.get_department(department_id)
     if row is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Department not found")
-    if data.parent_department_id == department_id:
-        raise HTTPException(status.HTTP_409_CONFLICT, "Department cannot be its own parent")
+    if "parent_department_id" in data.model_fields_set:
+        await _validate_parent(session, department_id, data.parent_department_id)
     if "head_id" in data.model_fields_set:
         await _validate_head(session, data.head_id)
+    if row.is_active and data.is_active is False:
+        active_members = await UserRepository(session).count_active_in_department(department_id)
+        if active_members > 0:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                f"Cannot deactivate: {active_members} active employee(s) still belong to this department",
+            )
     try:
         row = await service.update_department(row, data)
     except IntegrityError as exc:

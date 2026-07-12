@@ -15,6 +15,15 @@ class AllocationRepository:
     async def get_by_id(self, allocation_id: UUID) -> Allocation | None:
         return await self.session.get(Allocation, allocation_id)
 
+    async def get_by_id_for_update(self, allocation_id: UUID) -> Allocation | None:
+        """Locks the allocation row (SELECT ... FOR UPDATE) so a concurrent transition
+        on the same allocation (e.g. two overlapping transfer approvals) serializes
+        instead of both reading the pre-transition status and racing.
+        """
+        statement = select(Allocation).where(Allocation.id == allocation_id).with_for_update()
+        result = await self.session.execute(statement)
+        return result.scalar_one_or_none()
+
     async def get_active_for_asset(self, asset_id: UUID) -> Allocation | None:
         """The single ACTIVE or TRANSFER_REQUESTED allocation row for an asset, if any."""
         statement = select(Allocation).where(

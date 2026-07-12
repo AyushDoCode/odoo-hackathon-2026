@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.users.models import User
@@ -39,6 +39,13 @@ class UserRepository:
         statement = statement.offset(offset).limit(limit)
         result = await self.session.execute(statement)
         return result.scalars().all()
+
+    async def count_active_in_department(self, department_id: UUID) -> int:
+        statement = select(func.count()).select_from(User).where(
+            User.department_id == department_id, User.is_active.is_(True)
+        )
+        result = await self.session.execute(statement)
+        return int(result.scalar_one())
 
     async def create(self, user: User) -> User:
         self.session.add(user)

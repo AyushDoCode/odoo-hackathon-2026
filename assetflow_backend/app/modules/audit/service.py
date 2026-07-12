@@ -161,6 +161,11 @@ class AuditService:
             raise AuditError("Every discrepancy must be approved by an Asset Manager before closing")
         for item in items:
             if item.verification == VerificationResult.MISSING:
+                await self.allocation_service.close_for_maintenance(
+                    item.asset_id,
+                    actor_id=item.resolution_approved_by or cycle.created_by,
+                    reason=f"Automatically checked in: asset confirmed missing in audit cycle {cycle_id}",
+                )
                 try:
                     await self.assets.transition_status(
                         item.asset_id,

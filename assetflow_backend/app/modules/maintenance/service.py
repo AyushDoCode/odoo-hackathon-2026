@@ -77,7 +77,7 @@ class MaintenanceService:
         return request
 
     async def approve(self, request_id: UUID, *, approved_by: UUID) -> MaintenanceRequest:
-        request = await self.repository.get_by_id(request_id)
+        request = await self.repository.get_by_id_for_update(request_id)
         if request is None or request.status != MaintenanceStatus.PENDING:
             raise MaintenanceError("Request is not pending")
 
@@ -125,7 +125,7 @@ class MaintenanceService:
         return request
 
     async def reject(self, request_id: UUID, *, approved_by: UUID) -> MaintenanceRequest:
-        request = await self.repository.get_by_id(request_id)
+        request = await self.repository.get_by_id_for_update(request_id)
         if request is None or request.status != MaintenanceStatus.PENDING:
             raise MaintenanceError("Request is not pending")
 
@@ -159,7 +159,7 @@ class MaintenanceService:
     async def assign_technician(
         self, request_id: UUID, technician_id: UUID, *, actor_id: UUID
     ) -> MaintenanceRequest:
-        request = await self.repository.get_by_id(request_id)
+        request = await self.repository.get_by_id_for_update(request_id)
         if request is None or request.status != MaintenanceStatus.APPROVED:
             raise MaintenanceError("Request must be APPROVED before assigning a technician")
         technician = await self.users.get_by_id(technician_id)
@@ -196,7 +196,7 @@ class MaintenanceService:
         return actor.role in {UserRole.ADMIN, UserRole.ASSET_MANAGER} or request.technician_id == actor.id
 
     async def start_progress(self, request_id: UUID, *, actor: User) -> MaintenanceRequest:
-        request = await self.repository.get_by_id(request_id)
+        request = await self.repository.get_by_id_for_update(request_id)
         if request is None or request.status != MaintenanceStatus.TECHNICIAN_ASSIGNED:
             raise MaintenanceError("Request must have a technician assigned first")
         if not self._may_work(request, actor):
@@ -217,11 +217,8 @@ class MaintenanceService:
         return request
 
     async def resolve(self, request_id: UUID, *, actor: User) -> MaintenanceRequest:
-        request = await self.repository.get_by_id(request_id)
-        if request is None or request.status not in {
-            MaintenanceStatus.TECHNICIAN_ASSIGNED,
-            MaintenanceStatus.IN_PROGRESS,
-        }:
+        request = await self.repository.get_by_id_for_update(request_id)
+        if request is None or request.status != MaintenanceStatus.IN_PROGRESS:
             raise MaintenanceError("Request is not in a resolvable state")
         if not self._may_work(request, actor):
             raise MaintenancePermissionError("Only the assigned technician or Asset Manager may resolve work")

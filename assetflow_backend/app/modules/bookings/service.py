@@ -36,6 +36,9 @@ class BookingService:
         blocks until this transaction commits, then re-checks overlap against the fresh
         committed state.
         """
+        start_time = self._as_utc(data.start_time)
+        end_time = self._as_utc(data.end_time)
+
         resource = await self.assets.get_by_id_for_update(data.resource_id)
         if resource is None:
             await self.session.rollback()
@@ -51,9 +54,7 @@ class BookingService:
             await self.session.rollback()
             raise BookingPermissionError("You may only book on behalf of your own department")
 
-        overlaps = await self.repository.overlapping(
-            data.resource_id, data.start_time, data.end_time
-        )
+        overlaps = await self.repository.overlapping(data.resource_id, start_time, end_time)
         if overlaps:
             await self.session.rollback()
             raise BookingError("Slot unavailable: overlaps an existing booking")
@@ -62,8 +63,8 @@ class BookingService:
             resource_id=data.resource_id,
             user_id=actor.id,
             department_id=data.department_id,
-            start_time=data.start_time,
-            end_time=data.end_time,
+            start_time=start_time,
+            end_time=end_time,
             purpose=data.purpose,
             status=BookingStatus.BOOKED,
             created_by=actor.id,

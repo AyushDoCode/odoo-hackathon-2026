@@ -102,6 +102,11 @@ class AssetService:
             except IntegrityError as exc:
                 last_error = exc
                 await self.session.rollback()
+                # Only retry if the tag was genuinely taken by a concurrent insert --
+                # any other integrity violation (e.g. an unknown category_id) would
+                # fail identically on every retry and must surface as-is.
+                if await self.repository.get_by_tag(tag) is None:
+                    raise
         raise AssetConflictError("Could not generate a unique asset tag") from last_error
 
     async def update_asset(

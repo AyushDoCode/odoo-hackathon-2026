@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 import hashlib
+import logging
 import secrets
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +13,8 @@ from app.modules.auth.schemas import LoginRequest, RegisterRequest, ResetPasswor
 from app.modules.auth.security import create_access_token, hash_password, verify_password
 from app.modules.users.models import User, UserRole
 from app.modules.users.repository import UserRepository
+
+logger = logging.getLogger(__name__)
 
 
 class AuthError(ValueError):
@@ -52,7 +55,11 @@ class AuthService:
         access_token = create_access_token(subject=str(user.id), role=user.role.value)
         return Token(access_token=access_token)
 
-    async def create_password_reset(self, email: str) -> str:
+    async def create_password_reset(self, email: str) -> None:
+        """Issues a reset token if the email matches an active account. The token is
+        never returned to the caller -- it must be delivered out-of-band (e.g. email)
+        so that knowing an address alone can't be used to take over the account.
+        """
         token = secrets.token_urlsafe(32)
         user = await self.users.get_by_email(email)
         if user is not None and user.is_active:
@@ -61,7 +68,10 @@ class AuthService:
                 minutes=settings.password_reset_expire_minutes
             )
             await self.session.commit()
-        return token
+            # No email/SMS provider is wired up for this hackathon build -- log the
+            # token server-side so a developer/demo operator can retrieve it instead
+            # of exposing it over the API.
+            logger.info("Password reset requested for %s: token=%s", user.email, token)
 
     async def reset_password(self, data: ResetPasswordRequest) -> None:
         token_hash = hashlib.sha256(data.reset_token.encode("utf-8")).hexdigest()
