@@ -9,3 +9,6 @@ import app.modules.users.models  # noqa: F401
 import app.modules.assets.models  # noqa: F401
 import app.modules.allocations.models  # noqa: F401
 import app.modules.bookings.models  # noqa: F401
+import app.modules.maintenance.models  # noqa: F401
+import app.modules.audit.models  # noqa: F401
+import app.modules.activity.models  # noqa: F401

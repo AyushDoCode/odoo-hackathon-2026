@@ -5,6 +5,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.activity.service import record as record_activity
 from app.modules.allocations.models import Allocation, AllocationStatus
 from app.modules.allocations.repository import AllocationRepository
 from app.modules.allocations.schemas import AllocationCreate, TransferRequestCreate
@@ -58,6 +59,15 @@ class AllocationService:
             created_by=created_by,
         )
         self.repository.add(allocation)
+        await record_activity(
+            self.session,
+            actor_id=created_by,
+            action_type="asset.allocated",
+            category="alerts",
+            target_type="asset",
+            target_id=data.asset_id,
+            message=f"Asset {data.asset_id} allocated to user {data.to_user_id}",
+        )
         await self.session.commit()
         await self.session.refresh(allocation)
         return allocation
@@ -115,6 +125,15 @@ class AllocationService:
             created_by=actor.id,
         )
         self.repository.add(new_allocation)
+        await record_activity(
+            self.session,
+            actor_id=actor.id,
+            action_type="transfer.approved",
+            category="approvals",
+            target_type="asset",
+            target_id=allocation.asset_id,
+            message=f"Transfer of asset {allocation.asset_id} approved by {actor.id}",
+        )
         await self.session.commit()
         await self.session.refresh(new_allocation)
         return new_allocation

@@ -5,6 +5,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.activity.service import record as record_activity
 from app.modules.assets.repository import AssetRepository
 from app.modules.bookings.models import Booking, BookingStatus
 from app.modules.bookings.repository import BookingRepository
@@ -56,6 +57,15 @@ class BookingService:
             created_by=created_by,
         )
         self.repository.add(booking)
+        await record_activity(
+            self.session,
+            actor_id=created_by,
+            action_type="booking.confirmed",
+            category="bookings",
+            target_type="booking",
+            target_id=None,
+            message=f"Resource {data.resource_id} booked {data.start_time}-{data.end_time}",
+        )
         await self.session.commit()
         await self.session.refresh(booking)
         return booking
@@ -65,6 +75,15 @@ class BookingService:
         if booking is None:
             raise BookingError("Booking not found")
         booking.status = BookingStatus.CANCELLED
+        await record_activity(
+            self.session,
+            actor_id=booking.user_id,
+            action_type="booking.cancelled",
+            category="bookings",
+            target_type="booking",
+            target_id=booking.id,
+            message=f"Booking {booking.id} cancelled",
+        )
         await self.session.commit()
         await self.session.refresh(booking)
         return booking

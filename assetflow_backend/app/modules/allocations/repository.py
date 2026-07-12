@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.allocations.models import Allocation, AllocationStatus
@@ -58,3 +58,8 @@ class AllocationRepository:
 
     def add(self, allocation: Allocation) -> None:
         self.session.add(allocation)
+
+    async def count_by_status(self, status: AllocationStatus) -> int:
+        statement = select(func.count()).select_from(Allocation).where(Allocation.status == status)
+        result = await self.session.execute(statement)
+        return int(result.scalar_one())

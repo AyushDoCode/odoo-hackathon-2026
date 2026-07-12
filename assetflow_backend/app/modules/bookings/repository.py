@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.bookings.models import Booking, BookingStatus
@@ -44,3 +44,16 @@ class BookingRepository:
 
     def add(self, booking: Booking) -> None:
         self.session.add(booking)
+
+    async def count_ongoing(self, *, as_of: datetime) -> int:
+        statement = (
+            select(func.count())
+            .select_from(Booking)
+            .where(
+                Booking.status == BookingStatus.BOOKED,
+                Booking.start_time <= as_of,
+                Booking.end_time >= as_of,
+            )
+        )
+        result = await self.session.execute(statement)
+        return int(result.scalar_one())
