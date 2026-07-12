@@ -9,12 +9,7 @@ from alembic import context
 
 from app.core.config import settings
 from app.database.base import Base
-
-# Import every module's models so Base.metadata is fully populated
-# for autogenerate. Add new modules here as they're built.
-import app.modules.categories.models  # noqa: F401
-import app.modules.departments.models  # noqa: F401
-import app.modules.users.models  # noqa: F401
+import app.database.models_registry  # noqa: F401 - populate ORM mapper registry
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
