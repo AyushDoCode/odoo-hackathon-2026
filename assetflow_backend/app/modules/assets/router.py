@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, require_role
@@ -86,4 +86,28 @@ async def update_asset(
     if asset is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Asset not found")
     asset = await service.update_asset(asset, data)
+    return AssetRead.model_validate(asset)
+
+
+@router.post(
+    "/{asset_id}/status",
+    response_model=AssetRead,
+    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.ASSET_MANAGER))],
+)
+async def set_asset_status(
+    asset_id: UUID,
+    new_status: AssetStatus = Body(embed=True, alias="status"),
+    session: AsyncSession = Depends(get_db),
+) -> AssetRead:
+    """Manually set Available/Reserved/Retired/Disposed. Allocated/Maintenance/Lost are
+    set only by their owning workflow (allocations/maintenance/audit) and are rejected
+    here.
+    """
+    service = AssetService(session)
+    try:
+        asset = await service.set_manual_status(asset_id, new_status)
+    except AssetConflictError as exc:
+        await session.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+    asset = await service.get_asset(asset_id)
     return AssetRead.model_validate(asset)

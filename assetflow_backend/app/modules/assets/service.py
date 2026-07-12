@@ -14,6 +14,18 @@ class AssetConflictError(ValueError):
     """Raised when an asset status transition is not allowed from its current state."""
 
 
+# Statuses an Admin/Asset Manager may set directly (not driven by another module's
+# workflow). ALLOCATED/MAINTENANCE/LOST are owned exclusively by allocations,
+# maintenance, and audit respectively and must never be set here.
+_MANUALLY_SETTABLE_STATUSES = {
+    AssetStatus.AVAILABLE,
+    AssetStatus.RESERVED,
+    AssetStatus.RETIRED,
+    AssetStatus.DISPOSED,
+}
+_MANUALLY_SETTABLE_FROM = {AssetStatus.AVAILABLE, AssetStatus.RESERVED, AssetStatus.LOST}
+
+
 class AssetService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
@@ -90,4 +102,20 @@ class AssetService:
             )
         asset.status = new_status
         await self.session.flush()
+        return asset
+
+    async def set_manual_status(self, asset_id: UUID, new_status: AssetStatus) -> Asset:
+        """Admin/Asset Manager directly setting Available/Reserved/Retired/Disposed --
+        e.g. reserving an asset for a future purpose outside the booking system, or
+        retiring/disposing an asset at end of life. Never used to set ALLOCATED,
+        MAINTENANCE, or LOST -- those belong exclusively to their owning workflow.
+        """
+        if new_status not in _MANUALLY_SETTABLE_STATUSES:
+            raise AssetConflictError(
+                f"'{new_status}' can only be set by its owning workflow, not manually"
+            )
+        asset = await self.transition_status(
+            asset_id, new_status, expected_current=_MANUALLY_SETTABLE_FROM
+        )
+        await self.session.commit()
         return asset
