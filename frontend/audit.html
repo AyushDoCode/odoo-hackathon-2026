@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit | AssetFlow by odoo</title>
+    <link rel="stylesheet" href="assets/pages.css">
+    <script src="assets/api.js"></script>
+    <script>
+        if (window.AssetFlowAPI) {
+            window.AssetFlowAPI.requireAuth();
+        }
+    </script>
+</head>
+<body class="app-page">
+    <div class="app-shell">
+        <aside class="side-nav">
+            <div>
+                <div class="brand">
+                    <div class="brand-row">
+                        <span class="brand-mark square"><img src="assets/icons/nav-org.svg" alt="" style="width:20px;height:18px;"></span>
+                        <div>
+                            <div class="brand-title">AssetFlow</div>
+                            <div class="brand-subtitle caps">Enterprise Management</div>
+                        </div>
+                    </div>
+                </div>
+                <nav class="nav-main">
+                    <ul class="nav-list inset">
+                        <li><a class="nav-link" href="dashboard.html"><img src="assets/icons/nav-dashboard.svg" alt=""><span>Dashboard</span></a></li>
+                        <li><a class="nav-link" href="organization-setup.html"><img src="assets/icons/nav-org.svg" alt=""><span>Organization Setup</span></a></li>
+                        <li><a class="nav-link" href="assets-directory.html"><img src="assets/icons/nav-assets.svg" alt=""><span>Assets</span></a></li>
+                        <li><a class="nav-link" href="allocation-transfer.html"><img src="assets/icons/nav-allocation.svg" alt=""><span>Allocation &amp; Transfer</span></a></li>
+                        <li><a class="nav-link" href="resource-booking.html"><img src="assets/icons/nav-booking.svg" alt=""><span>Resource Booking</span></a></li>
+                        <li><a class="nav-link" href="maintenance.html"><img src="assets/icons/nav-maintenance.svg" alt=""><span>Maintenance</span></a></li>
+                        <li><a class="nav-link active" href="audit.html"><img src="assets/icons/nav-audit.svg" alt=""><span>Audit</span></a></li>
+                        <li><a class="nav-link" href="reports.html"><img src="assets/icons/nav-reports.svg" alt=""><span>Reports</span></a></li>
+                        <li><a class="nav-link" href="notifications.html"><img src="assets/icons/nav-notifications.svg" alt=""><span>Notifications</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="nav-footer">
+                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <section class="page-content">
+                <div class="content-inner stack-24">
+                    <div class="page-header" style="border-bottom:1px solid var(--border);padding-bottom:17px;">
+                        <div>
+                            <h1 class="page-title">Asset Audit</h1>
+                            <p class="page-kicker">
+                                <select id="cycle-select" class="btn soft" style="min-width:280px;"></select>
+                            </p>
+                            <p class="page-kicker" style="margin-top:4px;font-size:12px;line-height:16px;" id="cycle-auditors">-</p>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn outline" id="new-cycle-button">+ New Audit Cycle</button>
+                            <button class="btn outline" id="export-report-button">Export Report</button>
+                            <button class="btn primary" id="close-cycle-button">Close audit cycle</button>
+                        </div>
+                    </div>
+
+                    <div class="alert" id="discrepancy-alert" style="display:none;">
+                        <img src="assets/icons/icon-alert.svg" alt="" style="width:22px;height:21px;margin-top:5px;">
+                        <div>
+                            <h3 id="discrepancy-count">0 assets flagged</h3>
+                            <p>Discrepancy report generated automatically based on audit findings.</p>
+                        </div>
+                    </div>
+
+                    <div class="table-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:30%;">Asset</th>
+                                    <th style="width:29%;">Expected Location</th>
+                                    <th style="width:18%;">Status</th>
+                                    <th class="right">Verification</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-items-tbody">
+                                <tr><td colspan="4" class="muted" style="text-align:center;padding:24px;">Select an audit cycle above.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let cycles = [];
+        let selectedCycle = null;
+        let usersById = {};
+        const currentUser = window.AssetFlowAPI.getUser();
+        const isManager = currentUser && ['ADMIN', 'ASSET_MANAGER'].includes(currentUser.role);
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('cycle-select').addEventListener('change', (e) => {
+                selectedCycle = cycles.find(c => c.id === e.target.value);
+                renderCycle();
+            });
+            document.getElementById('new-cycle-button').addEventListener('click', createCycle);
+            document.getElementById('close-cycle-button').addEventListener('click', closeCycle);
+            document.getElementById('export-report-button').addEventListener('click', exportDiscrepancyReport);
+
+            const users = await window.AssetFlowAPI.fetchApi('/users');
+            users.forEach(u => { usersById[u.id] = u; });
+
+            await loadCycles();
+        });
+
+        async function loadCycles() {
+            const select = document.getElementById('cycle-select');
+            try {
+                cycles = await window.AssetFlowAPI.fetchApi('/audit/cycles');
+                if (!cycles || cycles.length === 0) {
+                    select.innerHTML = '<option>No audit cycles yet</option>';
+                    document.getElementById('audit-items-tbody').innerHTML =
+                        '<tr><td colspan="4" class="muted" style="text-align:center;padding:24px;">No audit cycles yet. Create one to get started.</td></tr>';
+                    return;
+                }
+                select.innerHTML = cycles.map(c =>
+                    `<option value="${c.id}">${c.start_date} to ${c.end_date} (${c.status})${c.location ? ' - ' + c.location : ''}</option>`
+                ).join('');
+                selectedCycle = cycles[0];
+                await loadCycleDetail();
+            } catch (error) {
+                console.error('Failed to load audit cycles:', error);
+                select.innerHTML = '<option>Error loading cycles</option>';
+            }
+        }
+
+        async function loadCycleDetail() {
+            if (!selectedCycle) return;
+            try {
+                selectedCycle = await window.AssetFlowAPI.fetchApi(`/audit/cycles/${selectedCycle.id}`);
+                renderCycle();
+            } catch (error) {
+                window.alert('Failed to load cycle: ' + error.message);
+            }
+        }
+
+        function renderCycle() {
+            if (!selectedCycle) return;
+            const auditorNames = (selectedCycle.auditor_ids || []).map(id => (usersById[id] ? usersById[id].name : id)).join(', ');
+            document.getElementById('cycle-auditors').textContent = `Auditors: ${auditorNames || 'None assigned'}`;
+            document.getElementById('close-cycle-button').style.display = selectedCycle.status === 'CLOSED' ? 'none' : (isManager ? 'inline-flex' : 'none');
+
+            const items = selectedCycle.items || [];
+            const flagged = items.filter(i => i.verification === 'MISSING' || i.verification === 'DAMAGED');
+            const alertBox = document.getElementById('discrepancy-alert');
+            if (flagged.length > 0) {
+                alertBox.style.display = 'flex';
+                document.getElementById('discrepancy-count').textContent = `${flagged.length} asset(s) flagged`;
+            } else {
+                alertBox.style.display = 'none';
+            }
+
+            const tbody = document.getElementById('audit-items-tbody');
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="muted" style="text-align:center;padding:24px;">No assets in scope for this cycle.</td></tr>';
+                return;
+            }
+            const canVerify = selectedCycle.status !== 'CLOSED' && currentUser &&
+                (currentUser.role === 'ADMIN' || (selectedCycle.auditor_ids || []).includes(currentUser.id));
+
+            tbody.innerHTML = items.map(item => {
+                let badgeClass = 'badge';
+                if (item.verification === 'VERIFIED') badgeClass += ' green';
+                if (item.verification === 'MISSING') badgeClass += ' red';
+                const statusLabel = item.verification || 'Not yet verified';
+
+                let action = '';
+                if (item.verification === null && canVerify) {
+                    action = `
+                        <button class="btn soft" style="padding:4px 8px;font-size:11px;" onclick="verifyItem('${item.id}', 'VERIFIED')">Verified</button>
+                        <button class="btn soft" style="padding:4px 8px;font-size:11px;" onclick="verifyItem('${item.id}', 'MISSING')">Missing</button>
+                        <button class="btn soft" style="padding:4px 8px;font-size:11px;" onclick="verifyItem('${item.id}', 'DAMAGED')">Damaged</button>
+                    `;
+                } else if ((item.verification === 'MISSING' || item.verification === 'DAMAGED') && !item.resolution_approved_by && isManager && selectedCycle.status !== 'CLOSED') {
+                    action = `<button class="btn soft" style="padding:4px 8px;font-size:11px;" onclick="approveDiscrepancy('${item.id}')">Approve Resolution</button>`;
+                } else if (item.resolution_approved_by) {
+                    action = '<span class="badge small green">Resolved</span>';
+                }
+
+                return `
+                    <tr>
+                        <td>${item.asset.tag} ${item.asset.name}</td>
+                        <td class="subtle">${item.expected_location || '-'}</td>
+                        <td><span class="${badgeClass}">${statusLabel}</span></td>
+                        <td class="right">${action}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function verifyItem(itemId, verification) {
+            let notes = null;
+            if (verification !== 'VERIFIED') {
+                notes = window.prompt(`Notes for ${verification.toLowerCase()} item (optional):`) || null;
+            }
+            try {
+                await window.AssetFlowAPI.postJson(`/audit/items/${itemId}/verify`, { verification, notes });
+                await loadCycleDetail();
+            } catch (error) {
+                window.alert('Failed: ' + error.message);
+            }
+        }
+
+        async function approveDiscrepancy(itemId) {
+            const notes = window.prompt('Resolution notes (required):');
+            if (!notes) return;
+            try {
+                await window.AssetFlowAPI.postJson(`/audit/items/${itemId}/approve-discrepancy`, { resolution_notes: notes });
+                await loadCycleDetail();
+            } catch (error) {
+                window.alert('Failed: ' + error.message);
+            }
+        }
+
+        async function closeCycle() {
+            if (!selectedCycle) return;
+            if (!window.confirm('Close this audit cycle? This locks it and updates asset statuses for any missing/damaged items.')) return;
+            try {
+                await window.AssetFlowAPI.postJson(`/audit/cycles/${selectedCycle.id}/close`, {});
+                await loadCycles();
+            } catch (error) {
+                window.alert('Failed to close cycle: ' + error.message);
+            }
+        }
+
+        async function exportDiscrepancyReport() {
+            if (!selectedCycle) return;
+            try {
+                const report = await window.AssetFlowAPI.fetchApi(`/audit/cycles/${selectedCycle.id}/discrepancy-report`);
+                const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `discrepancy-report-${selectedCycle.id}.json`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                window.alert('Failed to export: ' + error.message);
+            }
+        }
+
+        async function createCycle() {
+            try {
+                const assets = await window.AssetFlowAPI.fetchApi('/assets');
+                if (!assets || assets.length === 0) { window.alert('Register some assets first.'); return; }
+                const assetNames = assets.map((a, i) => `${i + 1}. ${a.tag} - ${a.name}`).join('\n');
+                const assetChoices = window.prompt(`Which assets are in scope? Enter numbers separated by commas:\n${assetNames}`);
+                if (!assetChoices) return;
+                const assetIds = assetChoices.split(',').map(s => parseInt(s.trim(), 10) - 1)
+                    .filter(i => assets[i]).map(i => assets[i].id);
+                if (assetIds.length === 0) { window.alert('No valid assets selected.'); return; }
+
+                const users = await window.AssetFlowAPI.fetchApi('/users');
+                const userNames = users.map((u, i) => `${i + 1}. ${u.name} (${u.role})`).join('\n');
+                const auditorChoices = window.prompt(`Who are the auditors? Enter numbers separated by commas:\n${userNames}`);
+                if (!auditorChoices) return;
+                const auditorIds = auditorChoices.split(',').map(s => parseInt(s.trim(), 10) - 1)
+                    .filter(i => users[i]).map(i => users[i].id);
+                if (auditorIds.length === 0) { window.alert('No valid auditors selected.'); return; }
+
+                const startDate = window.prompt('Start date (YYYY-MM-DD):', new Date().toISOString().slice(0, 10));
+                if (!startDate) return;
+                const endDate = window.prompt('End date (YYYY-MM-DD):', startDate);
+                if (!endDate) return;
+                const location = window.prompt('Location / scope (optional):') || null;
+
+                await window.AssetFlowAPI.postJson('/audit/cycles', {
+                    location, start_date: startDate, end_date: endDate, auditor_ids: auditorIds, asset_ids: assetIds,
+                });
+                await loadCycles();
+            } catch (error) {
+                window.alert('Failed to create audit cycle: ' + error.message);
+            }
+        }
+
+        // Handle Logout
+        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.AssetFlowAPI.logout();
+        });
+    </script>
+</body>
+</html>

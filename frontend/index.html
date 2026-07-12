@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | AssetFlow by odoo</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <script src="assets/api.js"></script>
+</head>
+<body>
+    <div class="login-container">
+        <img src="assets/images/blob.svg" alt="" class="corner-blob">
+
+        <p class="form-subtitle">Please enter your details</p>
+        <h2 class="form-title">Welcome Back</h2>
+
+        <p class="form-error" id="form-error" style="display:none;color:#ba1a1a;font-size:0.85rem;margin-bottom:1rem;"></p>
+
+        <form id="login-form" class="login-form">
+            <div class="input-wrapper">
+                <input type="email" id="email" class="input-field" placeholder=" " required>
+                <label for="email" class="input-label">Email address</label>
+            </div>
+
+            <div class="input-wrapper">
+                <input type="password" id="password" class="input-field password-field" placeholder=" " required>
+                <label for="password" class="input-label">Password</label>
+                <i class='bx bx-hide eye-icon' id="togglePassword"></i>
+            </div>
+
+            <div class="form-options">
+                <label class="remember-me">
+                    <input type="checkbox"> Remember me
+                </label>
+                <a href="#" class="forgot-password-link" id="forgot-password-link">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="login-button" id="login-button">Sign In</button>
+        </form>
+
+        <p class="signup-text">Don't have an account? <a href="signup.html">Sign up</a></p>
+    </div>
+
+    <script>
+        const passwordField = document.getElementById("password");
+        const togglePassword = document.getElementById("togglePassword");
+
+        togglePassword.addEventListener("click", () => {
+            const isHidden = passwordField.type === "password";
+            passwordField.type = isHidden ? "text" : "password";
+            togglePassword.classList.toggle("bx-hide", !isHidden);
+            togglePassword.classList.toggle("bx-show", isHidden);
+        });
+
+        // Already signed in? Skip straight to the dashboard.
+        if (window.AssetFlowAPI && window.AssetFlowAPI.getToken()) {
+            window.location.href = "dashboard.html";
+        }
+
+        const errorEl = document.getElementById("form-error");
+        function showError(message) {
+            errorEl.textContent = message;
+            errorEl.style.display = "block";
+        }
+
+        document.getElementById("login-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            errorEl.style.display = "none";
+            const button = document.getElementById("login-button");
+            const email = document.getElementById("email").value.trim();
+            const password = passwordField.value;
+
+            button.disabled = true;
+            button.textContent = "Signing in...";
+            try {
+                await window.AssetFlowAPI.login(email, password);
+                window.location.href = "dashboard.html";
+            } catch (err) {
+                showError(err.message || "Sign in failed. Please try again.");
+                button.disabled = false;
+                button.textContent = "Sign In";
+            }
+        });
+
+        document.getElementById("forgot-password-link").addEventListener("click", async (e) => {
+            e.preventDefault();
+            const email = document.getElementById("email").value.trim();
+            if (!email) {
+                showError("Enter your email address above first, then click Forgot password.");
+                return;
+            }
+            try {
+                const result = await window.AssetFlowAPI.postJson("/auth/forgot-password", { email });
+                showError(result.detail);
+                errorEl.style.color = "#00696e";
+            } catch (err) {
+                showError(err.message || "Could not process the request.");
+            }
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications | AssetFlow by odoo</title>
+    <link rel="stylesheet" href="assets/pages.css">
+    <script src="assets/api.js"></script>
+    <script>
+        if (window.AssetFlowAPI) {
+            window.AssetFlowAPI.requireAuth();
+        }
+    </script>
+</head>
+<body class="app-page">
+    <div class="app-shell">
+        <aside class="side-nav">
+            <div>
+                <div class="brand">
+                    <div class="brand-row">
+                        <span class="brand-mark square"><img src="assets/icons/nav-org.svg" alt="" style="width:20px;height:18px;"></span>
+                        <div>
+                            <div class="brand-title">AssetFlow</div>
+                            <div class="brand-subtitle caps">Enterprise Management</div>
+                        </div>
+                    </div>
+                </div>
+                <nav class="nav-main">
+                    <ul class="nav-list inset">
+                        <li><a class="nav-link" href="dashboard.html"><img src="assets/icons/nav-dashboard.svg" alt=""><span>Dashboard</span></a></li>
+                        <li><a class="nav-link" href="organization-setup.html"><img src="assets/icons/nav-org.svg" alt=""><span>Organization Setup</span></a></li>
+                        <li><a class="nav-link" href="assets-directory.html"><img src="assets/icons/nav-assets.svg" alt=""><span>Assets</span></a></li>
+                        <li><a class="nav-link" href="allocation-transfer.html"><img src="assets/icons/nav-allocation.svg" alt=""><span>Allocation &amp; Transfer</span></a></li>
+                        <li><a class="nav-link" href="resource-booking.html"><img src="assets/icons/nav-booking.svg" alt=""><span>Resource Booking</span></a></li>
+                        <li><a class="nav-link" href="maintenance.html"><img src="assets/icons/nav-maintenance.svg" alt=""><span>Maintenance</span></a></li>
+                        <li><a class="nav-link" href="audit.html"><img src="assets/icons/nav-audit.svg" alt=""><span>Audit</span></a></li>
+                        <li><a class="nav-link" href="reports.html"><img src="assets/icons/nav-reports.svg" alt=""><span>Reports</span></a></li>
+                        <li><a class="nav-link active" href="notifications.html"><img src="assets/icons/nav-notifications.svg" alt=""><span>Notifications</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="nav-footer">
+                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <section class="page-content">
+                <div class="content-inner stack-24">
+                    <div class="page-header center">
+                        <div>
+                            <h1 class="page-title">Notifications &amp; Activity Log</h1>
+                            <p class="page-kicker">Review recent system events and alerts.</p>
+                        </div>
+                        <button class="btn soft" id="mark-all-read-button">
+                            <svg class="small-icon" viewBox="0 0 24 24"><path d="m4 12 4 4 4-8M13 12l3 3 5-8"/></svg>
+                            Mark all as read
+                        </button>
+                    </div>
+
+                    <nav class="tabs" id="notification-tabs">
+                        <span class="tab active" data-category="">All Activity</span>
+                        <span class="tab" data-category="alerts">Alerts</span>
+                        <span class="tab" data-category="approvals">Approvals</span>
+                        <span class="tab" data-category="bookings">Bookings</span>
+                    </nav>
+
+                    <section class="log-feed" id="log-feed">
+                        <p class="muted" style="padding:20px;">Loading activity...</p>
+                    </section>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const CATEGORY_ICONS = {
+            alerts: { bg: '#ffdad6', color: '#ba1a1a' },
+            approvals: { bg: '#92eff5', color: '#00696e' },
+            bookings: { bg: '#e1e3e4', color: '#4e444a' },
+            organization: { bg: '#e1e3e4', color: '#4e444a' },
+            assets: { bg: '#e1e3e4', color: '#4e444a' },
+            audit: { bg: '#e1e3e4', color: '#4e444a' },
+        };
+
+        function timeAgo(iso) {
+            const diffMs = Date.now() - new Date(iso).getTime();
+            const minutes = Math.floor(diffMs / 60000);
+            if (minutes < 1) return 'just now';
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            return `${days}d ago`;
+        }
+
+        async function loadNotifications(category) {
+            const feed = document.getElementById('log-feed');
+            feed.innerHTML = '<p class="muted" style="padding:20px;">Loading activity...</p>';
+            try {
+                const path = category ? `/activity/notifications?category=${encodeURIComponent(category)}` : '/activity/notifications';
+                const items = await window.AssetFlowAPI.fetchApi(path);
+                if (!items || items.length === 0) {
+                    feed.innerHTML = '<p class="muted" style="padding:20px;">No activity yet.</p>';
+                    return;
+                }
+                feed.innerHTML = items.map(item => {
+                    const style = CATEGORY_ICONS[item.category] || { bg: '#e1e3e4', color: '#4e444a' };
+                    return `
+                        <article class="log-item ${item.is_read ? '' : 'unread'}" data-id="${item.id}">
+                            <div class="icon-circle" style="background:${style.bg};color:${style.color};">
+                                <svg class="inline-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/></svg>
+                            </div>
+                            <div class="log-body">
+                                <div class="log-head">
+                                    <h2 class="log-title ${item.is_read ? '' : 'unread'}">${item.action_type.replace(/[._]/g, ' ')}</h2>
+                                    <span class="log-time">${timeAgo(item.created_at)}</span>
+                                </div>
+                                <p class="log-copy">${item.message}</p>
+                                ${item.is_read ? '' : `<p class="tiny-caps" style="margin:8px 0 0;color:#57344f;cursor:pointer;" onclick="markRead('${item.id}')">Mark as read</p>`}
+                            </div>
+                        </article>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load notifications:', error);
+                feed.innerHTML = '<p style="color:red;padding:20px;">Error loading activity.</p>';
+            }
+        }
+
+        async function markRead(id) {
+            try {
+                await window.AssetFlowAPI.postJson(`/activity/notifications/${id}/read`, {});
+            } catch (error) {
+                console.error('Failed to mark read:', error);
+            }
+            const activeTab = document.querySelector('#notification-tabs .tab.active');
+            await loadNotifications(activeTab ? activeTab.getAttribute('data-category') : '');
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const tabs = document.querySelectorAll('#notification-tabs .tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', async () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    await loadNotifications(tab.getAttribute('data-category'));
+                });
+            });
+
+            document.getElementById('mark-all-read-button').addEventListener('click', async () => {
+                const unreadItems = document.querySelectorAll('.log-item.unread');
+                await Promise.all(
+                    Array.from(unreadItems).map(el =>
+                        window.AssetFlowAPI.postJson(`/activity/notifications/${el.getAttribute('data-id')}/read`, {}).catch(() => null)
+                    )
+                );
+                const activeTab = document.querySelector('#notification-tabs .tab.active');
+                await loadNotifications(activeTab ? activeTab.getAttribute('data-category') : '');
+            });
+
+            await loadNotifications('');
+        });
+
+        // Handle Logout
+        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.AssetFlowAPI.logout();
+        });
+    </script>
+</body>
+</html>
