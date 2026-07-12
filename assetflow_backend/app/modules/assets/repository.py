@@ -6,6 +6,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.modules.allocations.models import Allocation, AllocationStatus
 from app.modules.assets.models import Asset, AssetStatus
 
 
@@ -14,9 +15,7 @@ class AssetRepository:
         self.session = session
 
     def _eager(self):
-        return select(Asset).options(
-            selectinload(Asset.category), selectinload(Asset.department)
-        )
+        return select(Asset).options(selectinload(Asset.category))
 
     async def get_by_id(self, asset_id: UUID) -> Asset | None:
         statement = self._eager().where(Asset.id == asset_id)
@@ -65,7 +64,15 @@ class AssetRepository:
         if status is not None:
             statement = statement.where(Asset.status == status)
         if department_id is not None:
-            statement = statement.where(Asset.department_id == department_id)
+            # "Department" isn't stored on the asset itself -- it's derived from
+            # whichever allocation currently holds it (an asset with no active
+            # allocation has no department to filter by).
+            statement = statement.join(
+                Allocation,
+                (Allocation.asset_id == Asset.id)
+                & (Allocation.status == AllocationStatus.ACTIVE)
+                & (Allocation.department_id == department_id),
+            )
 
         statement = statement.offset(offset).limit(limit)
         result = await self.session.execute(statement)
@@ -74,7 +81,7 @@ class AssetRepository:
     async def create(self, asset: Asset) -> Asset:
         self.session.add(asset)
         await self.session.flush()
-        await self.session.refresh(asset, attribute_names=["category", "department"])
+        await self.session.refresh(asset, attribute_names=["category"])
         return asset
 
     async def count_by_status(self, status: AssetStatus) -> int:

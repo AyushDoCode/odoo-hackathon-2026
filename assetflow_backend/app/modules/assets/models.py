@@ -33,11 +33,6 @@ class Asset(AuditMixin, Base):
         ForeignKey("asset_categories.id", ondelete="RESTRICT"),
         nullable=False,
     )
-    department_id: Mapped[UUID | None] = mapped_column(
-        Uuid(as_uuid=True),
-        ForeignKey("departments.id", ondelete="SET NULL"),
-        nullable=True,
-    )
     status: Mapped[AssetStatus] = mapped_column(
         SQLEnum(
             AssetStatus,
@@ -62,4 +57,3 @@ class Asset(AuditMixin, Base):
     next_service_due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     category = relationship("AssetCategory", lazy="raise")
-    department = relationship("Department", lazy="raise")

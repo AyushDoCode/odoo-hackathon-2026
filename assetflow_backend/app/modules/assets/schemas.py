@@ -14,7 +14,6 @@ class AssetCreate(BaseModel):
 
     name: str = Field(min_length=1, max_length=255)
     category_id: UUID
-    department_id: UUID | None = None
     location: str | None = Field(default=None, max_length=255)
     serial_number: str | None = Field(default=None, max_length=255)
     qr_code: str | None = Field(default=None, max_length=255)
@@ -32,7 +31,6 @@ class AssetUpdate(BaseModel):
 
     name: str | None = Field(default=None, min_length=1, max_length=255)
     category_id: UUID | None = None
-    department_id: UUID | None = None
     location: str | None = Field(default=None, max_length=255)
     serial_number: str | None = Field(default=None, max_length=255)
     qr_code: str | None = Field(default=None, max_length=255)
@@ -53,7 +51,6 @@ class AssetRead(BaseModel):
     name: str
     category_id: UUID
     category: AssetCategoryRead
-    department_id: UUID | None
     status: AssetStatus
     location: str | None
     serial_number: str | None

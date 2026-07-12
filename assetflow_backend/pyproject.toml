@@ -20,6 +20,7 @@ dependencies = [
     "pydantic-settings>=2.14,<3.0",
     "python-dotenv>=1.2,<2.0",
     "email-validator>=2.3,<3.0",
+    "passlib[argon2]>=1.7,<2.0",
 ]
 
 [project.optional-dependencies]
@@ -29,6 +30,7 @@ dev = [
     "mypy>=2.2,<3.0",
     "pytest>=9.1,<10.0",
     "pytest-asyncio>=1.4,<2.0",
+    "httpx>=0.28,<1.0",
 ]
 
 [tool.setuptools]

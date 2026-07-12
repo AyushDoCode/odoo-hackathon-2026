@@ -9,11 +9,7 @@ pydantic
 pydantic-settings
 email-validator
 
-python-jose[cryptography]
 passlib[argon2]
-python-multipart
-
-redis
 
 httpx
 

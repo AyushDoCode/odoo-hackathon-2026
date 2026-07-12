@@ -66,7 +66,7 @@ class AssetService:
         for field_name, value in updates.items():
             setattr(asset, field_name, value)
         await self.session.commit()
-        await self.session.refresh(asset, attribute_names=["category", "department"])
+        await self.session.refresh(asset, attribute_names=["category"])
         return asset
 
     async def transition_status(
