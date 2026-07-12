@@ -1,0 +1,33 @@
+services:
+  mysql:
+    image: mysql:8
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: assetflow
+    ports:
+      - "3307:3306"
+    volumes:
+      - assetflow_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mysql+aiomysql://root:root@mysql:3306/assetflow
+      SECRET_KEY: ${SECRET_KEY:-CHANGE_ME_TO_A_LONG_RANDOM_SECRET}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+    ports:
+      - "8000:8000"
+
+volumes:
+  assetflow_mysql_data:
