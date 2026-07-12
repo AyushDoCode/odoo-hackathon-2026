@@ -13,6 +13,12 @@ analytics, email delivery, cloud storage, or background workers.
 
 Figma design reference: [odoo design](https://www.figma.com/design/dCF62HroJcJkobjTF9sLQE/odoo-design?node-id=0-1&t=koth2t1r8psk9Zg9-1)
 
+## Project links
+
+- Design: [odoo design](https://www.figma.com/design/dCF62HroJcJkobjTF9sLQE/odoo-design?node-id=0-1&t=koth2t1r8psk9Zg9-1)
+- Google Drive file: [shared project file](https://drive.google.com/file/d/1ldDjT4PMhk19dl23MNHtCwy3B8gqw3fd/view?usp=sharing)
+- Short link: [project resource](https://bit.ly/4w1p8t9)
+
 ## Tech stack
 
 - Backend: FastAPI, SQLAlchemy async, Alembic, Pydantic
