@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maintenance | AssetFlow by odoo</title>
     <link rel="stylesheet" href="assets/pages.css">
+    <script src="assets/api.js"></script>
+    <script>
+        if (window.AssetFlowAPI) {
+            window.AssetFlowAPI.requireAuth();
+        }
+    </script>
 </head>
 <body class="app-page">
     <div class="app-shell">
@@ -50,9 +56,9 @@
                         <img src="assets/icons/icon-bell.svg" alt="">
                         <span class="dot"></span>
                     </button>
-                    <div class="user-chip">
-                        <div class="user-lines"><strong>Admin User</strong><small>Facilities Dept</small></div>
-                        <div class="avatar-text">AU</div>
+                    <div class="user-chip" id="user-chip-container">
+                        <div class="user-lines"><strong id="user-chip-name">Admin User</strong><small id="user-chip-role">User</small></div>
+                        <div class="avatar-text">US</div>
                     </div>
                 </div>
             </header>
@@ -76,91 +82,94 @@
             </section>
 
             <section class="kanban-wrap">
-                <div class="kanban">
-                    <div class="kanban-col">
-                        <div class="kanban-head">
-                            <h2 class="kanban-title"><span class="status-dot" style="color:#6c757d;"></span>Pending</h2>
-                            <span class="badge">2</span>
-                        </div>
-                        <div class="kanban-body">
-                            <article class="ticket">
-                                <div class="ticket-top"><span class="ticket-code">AF-0062</span><span class="avatar-mini">--</span></div>
-                                <h3 class="ticket-title">Projector bulb not turning on</h3>
-                                <p class="ticket-meta">Room B2</p>
-                                <div class="ticket-foot"><span>Reported: Today</span><span class="avatar-mini">--</span></div>
-                            </article>
-                            <article class="ticket">
-                                <div class="ticket-top"><span class="ticket-code">AF-0145</span><span class="avatar-mini">--</span></div>
-                                <h3 class="ticket-title">AC Unit leaking water</h3>
-                                <p class="ticket-meta">HQ Floor 3</p>
-                                <div class="ticket-foot"><span>Reported: Yesterday</span><span class="avatar-mini">--</span></div>
-                            </article>
-                        </div>
-                    </div>
-
-                    <div class="kanban-col">
-                        <div class="kanban-head">
-                            <h2 class="kanban-title"><span class="status-dot" style="color:#00696e;"></span>Approved</h2>
-                            <span class="badge">1</span>
-                        </div>
-                        <div class="kanban-body">
-                            <article class="ticket" style="border-left:4px solid #00696e;padding-left:16px;">
-                                <div class="ticket-top"><span class="ticket-code">AF-0031</span><span class="avatar-mini">--</span></div>
-                                <h3 class="ticket-title">Noisy compressor</h3>
-                                <p class="ticket-meta">HVAC</p>
-                                <div class="ticket-foot"><span style="color:#00696e;font-weight:500;">Awaiting Tech</span><span class="avatar-mini">--</span></div>
-                            </article>
-                        </div>
-                    </div>
-
-                    <div class="kanban-col">
-                        <div class="kanban-head">
-                            <h2 class="kanban-title"><span class="status-dot" style="color:#714b67;"></span>Technician Assigned</h2>
-                            <span class="badge">1</span>
-                        </div>
-                        <div class="kanban-body">
-                            <article class="ticket">
-                                <div class="ticket-top"><span class="ticket-code">AF-0878</span><span class="avatar-mini" style="background:#714b67;color:#fff;">RV</span></div>
-                                <h3 class="ticket-title">Forklift regular service</h3>
-                                <p class="ticket-meta">Warehouse</p>
-                                <div class="ticket-foot"><span style="color:#714b67;">Tomorrow</span><span class="avatar-mini" style="background:#714b67;color:#fff;">RV</span></div>
-                            </article>
-                        </div>
-                    </div>
-
-                    <div class="kanban-col">
-                        <div class="kanban-head">
-                            <h2 class="kanban-title"><span class="status-dot" style="color:#008b91;"></span>In Progress</h2>
-                            <span class="badge">1</span>
-                        </div>
-                        <div class="kanban-body">
-                            <article class="ticket" style="border-left:4px solid #008b91;padding-left:16px;">
-                                <div class="ticket-top"><span class="ticket-code">AF-0210</span><span class="avatar-mini">MK</span></div>
-                                <h3 class="ticket-title">Network rack inspection</h3>
-                                <p class="ticket-meta">Server Room A</p>
-                                <div class="ticket-foot"><span>Started 09:30</span><span class="avatar-mini">MK</span></div>
-                            </article>
-                        </div>
-                    </div>
-
-                    <div class="kanban-col">
-                        <div class="kanban-head">
-                            <h2 class="kanban-title"><span class="status-dot" style="color:#3b4c24;"></span>Resolved</h2>
-                            <span class="badge">1</span>
-                        </div>
-                        <div class="kanban-body">
-                            <article class="ticket done">
-                                <div class="ticket-top"><span class="ticket-code" style="background:#e1e3e4;color:#6c757d;text-decoration:line-through;">AF-873</span><span class="avatar-mini">OK</span></div>
-                                <h3 class="ticket-title">Chair repair</h3>
-                                <div class="ticket-foot"><span style="color:#34451e;font-weight:500;">Resolved 7 Jul</span><span class="avatar-mini">RV</span></div>
-                            </article>
-                        </div>
-                    </div>
+                <div class="kanban" id="kanban-board">
+                    <!-- Loading skeleton -->
+                    <div style="padding:24px;text-align:center;width:100%;" class="muted">Loading maintenance board...</div>
                 </div>
             </section>
 
             <div class="help-text">Approving a card moves the asset to under maintenance, resolving return it to available.</div>
         </main>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Update user profile chip
+            const user = window.AssetFlowAPI.getUser();
+            if (user && user.name) {
+                document.querySelector('#user-chip-container .avatar-text').textContent = user.name.substring(0, 2).toUpperCase();
+                document.getElementById('user-chip-name').textContent = user.name;
+                document.getElementById('user-chip-role').textContent = user.role || 'User';
+            }
+
+            await loadBoard();
+        });
+
+        async function loadBoard() {
+            const board = document.getElementById('kanban-board');
+            try {
+                const tickets = await window.AssetFlowAPI.fetchApi('/maintenance/board');
+                
+                const columns = [
+                    { key: 'PENDING', title: 'Pending', color: '#6c757d' },
+                    { key: 'APPROVED', title: 'Approved', color: '#00696e' },
+                    { key: 'TECHNICIAN_ASSIGNED', title: 'Technician Assigned', color: '#714b67' },
+                    { key: 'IN_PROGRESS', title: 'In Progress', color: '#008b91' },
+                    { key: 'RESOLVED', title: 'Resolved', color: '#3b4c24' }
+                ];
+
+                const ticketGroups = {};
+                columns.forEach(col => ticketGroups[col.key] = []);
+
+                if (tickets && Array.isArray(tickets)) {
+                    tickets.forEach(ticket => {
+                        if (ticketGroups[ticket.status]) {
+                            ticketGroups[ticket.status].push(ticket);
+                        } else if (ticket.status === 'REJECTED') {
+                            // Ignored on this specific view
+                        }
+                    });
+                }
+
+                board.innerHTML = columns.map(col => {
+                    const colTickets = ticketGroups[col.key] || [];
+                    const htmlTickets = colTickets.map(t => {
+                        const code = t.asset ? (t.asset.tag || 'AF-???') : 'N/A';
+                        const techInit = t.technician ? t.technician.name.substring(0,2).toUpperCase() : '--';
+                        return `
+                            <article class="ticket" style="${col.key !== 'PENDING' ? 'border-left:4px solid '+col.color+';padding-left:16px;' : ''}">
+                                <div class="ticket-top"><span class="ticket-code">${code}</span><span class="avatar-mini">${techInit}</span></div>
+                                <h3 class="ticket-title">${t.issue_description || 'No description'}</h3>
+                                <p class="ticket-meta">Priority: ${t.priority}</p>
+                                <div class="ticket-foot"><span>Status: ${t.status}</span><span class="avatar-mini">${techInit}</span></div>
+                            </article>
+                        `;
+                    }).join('');
+
+                    return `
+                    <div class="kanban-col">
+                        <div class="kanban-head">
+                            <h2 class="kanban-title"><span class="status-dot" style="color:${col.color};"></span>${col.title}</h2>
+                            <span class="badge">${colTickets.length}</span>
+                        </div>
+                        <div class="kanban-body">
+                            ${htmlTickets}
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error("Failed to load maintenance board:", error);
+                board.innerHTML = `<div style="padding:24px;text-align:center;width:100%;color:red;">Error loading maintenance board.</div>`;
+            }
+        }
+
+        // Handle Logout
+        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.AssetFlowAPI.logout();
+        });
+    </script>
 </body>
 </html>

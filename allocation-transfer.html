@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Allocation &amp; Transfer | AssetFlow by odoo</title>
     <link rel="stylesheet" href="assets/pages.css">
+    <script src="assets/api.js"></script>
+    <script>
+        if (window.AssetFlowAPI) {
+            window.AssetFlowAPI.requireAuth();
+        }
+    </script>
 </head>
 <body class="app-page">
     <div class="app-shell">
@@ -44,7 +50,10 @@
                 <h1>Asset Allocation &amp; Transfer</h1>
                 <div class="top-actions">
                     <button class="icon-button" aria-label="Notifications"><img src="assets/icons/icon-bell.svg" alt=""></button>
-                    <div class="avatar-img" style="display:grid;place-items:center;background:#e9ecef;border:1px solid #d1c3ca;color:#57344f;font-weight:700;">A</div>
+                    <div class="user-chip" id="user-chip-container">
+                        <div class="avatar-text">US</div>
+                        <span class="tiny-caps" id="user-chip-name">User</span>
+                    </div>
                 </div>
             </header>
 
@@ -147,5 +156,22 @@
             </section>
         </main>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Update user profile chip
+            const user = window.AssetFlowAPI.getUser();
+            if (user && user.name) {
+                document.querySelector('#user-chip-container .avatar-text').textContent = user.name.substring(0, 2).toUpperCase();
+                document.getElementById('user-chip-name').textContent = user.name;
+            }
+        });
+
+        // Handle Logout
+        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.AssetFlowAPI.logout();
+        });
+    </script>
 </body>
 </html>

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+from dotenv import load_dotenv
 
 from app.database.session import AsyncSessionLocal
 from app.modules.auth.security import hash_password
@@ -10,6 +11,7 @@ from app.modules.users.repository import UserRepository
 
 
 async def bootstrap() -> None:
+    load_dotenv()
     email = os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "").strip().lower()
     password = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD", "")
     name = os.environ.get("BOOTSTRAP_ADMIN_NAME", "AssetFlow Admin").strip()
