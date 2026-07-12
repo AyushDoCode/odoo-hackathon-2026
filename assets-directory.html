@@ -1,10 +1,16 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assets | AssetFlow by odoo</title>
     <link rel="stylesheet" href="assets/pages.css">
+    <script src="assets/api.js"></script>
+    <script>
+        if (window.AssetFlowAPI) {
+            window.AssetFlowAPI.requireAuth();
+        }
+    </script>
 </head>
 <body class="app-page">
     <div class="app-shell">
@@ -49,9 +55,9 @@
                     <button class="icon-button"><img src="assets/icons/ad-bell.svg" alt=""></button>
                     <button class="icon-button"><img src="assets/icons/ad-help.svg" alt=""></button>
                     <div style="width:1px;height:32px;background:#e9ecef;"></div>
-                    <div class="user-chip">
+                    <div class="user-chip" id="user-chip-container">
                         <div class="avatar-text">US</div>
-                        <span class="tiny-caps">Admin</span>
+                        <span class="tiny-caps" id="user-chip-name">User</span>
                     </div>
                 </div>
             </header>
@@ -94,30 +100,9 @@
                                     <th class="right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="assets-tbody">
                                 <tr>
-                                    <td class="mono muted">AF-0012</td>
-                                    <td><strong>Dell Laptop</strong></td>
-                                    <td class="subtle">Electronics</td>
-                                    <td><span class="badge green">Allocated</span></td>
-                                    <td class="subtle">Bengaluru</td>
-                                    <td class="right">...</td>
-                                </tr>
-                                <tr>
-                                    <td class="mono muted">AF-0062</td>
-                                    <td><strong>Projector</strong></td>
-                                    <td class="subtle">Electronics</td>
-                                    <td><span class="badge red">Maintenance</span></td>
-                                    <td class="subtle">HQ Floor 2</td>
-                                    <td class="right">...</td>
-                                </tr>
-                                <tr>
-                                    <td class="mono muted">AF-0201</td>
-                                    <td><strong>Office chair</strong></td>
-                                    <td class="subtle">Furniture</td>
-                                    <td><span class="badge cyan">Available</span></td>
-                                    <td class="subtle">Warehouse</td>
-                                    <td class="right">...</td>
+                                    <td colspan="6" style="text-align:center;padding:24px;" class="muted">Loading assets...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -126,5 +111,63 @@
             </section>
         </main>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Update user profile chip
+            const user = window.AssetFlowAPI.getUser();
+            if (user && user.name) {
+                document.querySelector('#user-chip-container .avatar-text').textContent = user.name.substring(0, 2).toUpperCase();
+                document.getElementById('user-chip-name').textContent = user.name;
+            }
+
+            // Load assets from API
+            await loadAssets();
+        });
+
+        async function loadAssets() {
+            const tbody = document.getElementById('assets-tbody');
+            try {
+                const assets = await window.AssetFlowAPI.fetchApi('/assets');
+                
+                if (!assets || assets.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;" class="muted">No assets found.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = assets.map(asset => {
+                    let badgeClass = 'badge';
+                    if (asset.status === 'AVAILABLE') badgeClass += ' cyan';
+                    if (asset.status === 'ALLOCATED') badgeClass += ' green';
+                    if (asset.status === 'MAINTENANCE') badgeClass += ' red';
+                    
+                    const categoryName = asset.category ? asset.category.name : '<span class="muted">None</span>';
+
+                    return `
+                        <tr>
+                            <td class="mono muted">${asset.tag || '-'}</td>
+                            <td><strong>${asset.name}</strong></td>
+                            <td class="subtle">${categoryName}</td>
+                            <td><span class="${badgeClass}">${asset.status}</span></td>
+                            <td class="subtle">${asset.location || 'Unknown'}</td>
+                            <td class="right">
+                                <button class="icon-button" style="width:28px;height:28px;"><svg class="small-icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error("Failed to load assets:", error);
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:red;">Error loading assets.</td></tr>`;
+            }
+        }
+
+        // Handle Logout
+        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.AssetFlowAPI.logout();
+        });
+    </script>
 </body>
 </html>

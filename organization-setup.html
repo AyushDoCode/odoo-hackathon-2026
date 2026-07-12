@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Organization Setup | AssetFlow by odoo</title>
     <link rel="stylesheet" href="assets/pages.css">
+    <script src="assets/api.js"></script>
+    <script>
+        if (window.AssetFlowAPI) {
+            window.AssetFlowAPI.requireAuth();
+        }
+    </script>
 </head>
 <body class="app-page">
     <div class="app-shell">
@@ -49,11 +55,11 @@
                     <button class="icon-button"><img src="assets/icons/icon-bell.svg" alt=""><span class="dot"></span></button>
                     <button class="icon-button"><img src="assets/icons/icon-help.svg" alt=""></button>
                     <div style="width:1px;height:24px;background:#d1c3ca;"></div>
-                    <div class="user-chip">
-                        <div class="avatar-text" style="width:32px;height:32px;border-radius:12px;font-size:11px;">AU</div>
+                    <div class="user-chip" id="user-chip-container">
+                        <div class="avatar-text" style="width:32px;height:32px;border-radius:12px;font-size:11px;">US</div>
                         <div>
-                            <div class="tiny-caps" style="color:#191c1d;">Admin User</div>
-                            <div style="font-size:10px;line-height:10px;color:#4e444a;">Super Admin</div>
+                            <div class="tiny-caps" style="color:#191c1d;" id="user-chip-name">User</div>
+                            <div style="font-size:10px;line-height:10px;color:#4e444a;" id="user-chip-role">Role</div>
                         </div>
                     </div>
                 </div>
@@ -76,93 +82,155 @@
                     </div>
 
                     <section class="card r8" style="overflow:hidden;">
-                        <div class="tabs">
-                            <button class="tab active">Departments</button>
-                            <button class="tab">Categories</button>
-                            <button class="tab">Employees</button>
+                        <div class="tabs" id="org-tabs">
+                            <button class="tab active" data-target="panel-departments">Departments</button>
+                            <button class="tab" data-target="panel-categories">Categories</button>
+                            <button class="tab" data-target="panel-employees">Employees</button>
                         </div>
 
-                        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--bg);padding:16px;">
-                            <div class="search-wrap" style="width:288px;">
-                                <input class="search-input" style="height:36px;background:#fff;padding-left:37px;" type="text" placeholder="Filter departments...">
-                                <img class="search-icon" src="assets/icons/ad-search-filter.svg" alt="">
+                        <!-- Departments Panel -->
+                        <div id="panel-departments" class="tab-panel active">
+                            <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--bg);padding:16px;">
+                                <div class="search-wrap" style="width:288px;">
+                                    <input class="search-input" style="height:36px;background:#fff;padding-left:37px;" type="text" placeholder="Filter departments...">
+                                    <img class="search-icon" src="assets/icons/ad-search-filter.svg" alt="">
+                                </div>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <span style="font-size:12px;color:#4e444a;">View:</span>
+                                    <div style="display:flex;border:1px solid var(--border);background:#f3f4f5;border-radius:2px;padding:3px;">
+                                        <button class="icon-button" style="width:28px;height:28px;border-radius:2px;background:#fff;"><svg class="small-icon" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg></button>
+                                        <button class="icon-button" style="width:28px;height:28px;border-radius:2px;"><svg class="small-icon" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg></button>
+                                    </div>
+                                </div>
                             </div>
-                            <div style="display:flex;align-items:center;gap:8px;">
-                                <span style="font-size:12px;color:#4e444a;">View:</span>
-                                <div style="display:flex;border:1px solid var(--border);background:#f3f4f5;border-radius:2px;padding:3px;">
-                                    <button class="icon-button" style="width:28px;height:28px;border-radius:2px;background:#fff;"><svg class="small-icon" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg></button>
-                                    <button class="icon-button" style="width:28px;height:28px;border-radius:2px;"><svg class="small-icon" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg></button>
+
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:48px;"><span style="display:block;width:16px;height:16px;border:1px solid #d1c3ca;background:#fff;"></span></th>
+                                        <th>Department Name</th>
+                                        <th>Department Code</th>
+                                        <th>Head of Department</th>
+                                        <th>Parent Dept</th>
+                                        <th>Status</th>
+                                        <th class="right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="departments-tbody">
+                                    <tr>
+                                        <td colspan="7" style="text-align:center;padding:24px;" class="muted">Loading departments...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="pagination">
+                                <span style="font-size:12px;color:#4e444a;" id="dept-pagination-info">Showing 0 entries</span>
+                                <div class="page-numbers">
+                                    <span class="page-box" style="opacity:.5;">&lt;</span>
+                                    <span class="page-box active">1</span>
+                                    <span class="page-box">&gt;</span>
                                 </div>
                             </div>
                         </div>
 
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th style="width:48px;"><span style="display:block;width:16px;height:16px;border:1px solid #d1c3ca;background:#fff;"></span></th>
-                                    <th>Department Name</th>
-                                    <th>Department Code</th>
-                                    <th>Head of Department</th>
-                                    <th>Parent Dept</th>
-                                    <th>Status</th>
-                                    <th class="right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><span style="display:block;width:16px;height:16px;border:1px solid #d1c3ca;background:#fff;"></span></td>
-                                    <td><strong>Information Technology</strong></td>
-                                    <td class="mono muted" style="font-size:12px;">DEP-IT-001</td>
-                                    <td><span class="avatar-mini">SJ</span> Sarah Jenkins</td>
-                                    <td class="muted">Headquarters</td>
-                                    <td><span class="badge green"><span class="status-dot"></span>Active</span></td>
-                                    <td class="right"></td>
-                                </tr>
-                                <tr>
-                                    <td><span style="display:block;width:16px;height:16px;border:1px solid #d1c3ca;background:#fff;"></span></td>
-                                    <td><strong>Infrastructure</strong></td>
-                                    <td class="mono muted" style="font-size:12px;">DEP-IT-102</td>
-                                    <td><span class="avatar-mini">MC</span> Michael Chen</td>
-                                    <td class="muted">Information Technology</td>
-                                    <td><span class="badge green"><span class="status-dot"></span>Active</span></td>
-                                    <td class="right"></td>
-                                </tr>
-                                <tr>
-                                    <td><span style="display:block;width:16px;height:16px;border:1px solid #d1c3ca;background:#fff;"></span></td>
-                                    <td><strong>Operations</strong></td>
-                                    <td class="mono muted" style="font-size:12px;">DEP-OP-001</td>
-                                    <td><span class="avatar-mini">DR</span> David Ross</td>
-                                    <td class="muted">Headquarters</td>
-                                    <td><span class="badge green"><span class="status-dot"></span>Active</span></td>
-                                    <td class="right"></td>
-                                </tr>
-                                <tr>
-                                    <td><span style="display:block;width:16px;height:16px;border:1px solid #d1c3ca;background:#fff;"></span></td>
-                                    <td><strong>Logistics</strong></td>
-                                    <td class="mono muted" style="font-size:12px;">DEP-OP-105</td>
-                                    <td><em class="muted">Unassigned</em></td>
-                                    <td class="muted">Operations</td>
-                                    <td><span class="badge"><span class="status-dot"></span>Inactive</span></td>
-                                    <td class="right"></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <!-- Categories Panel -->
+                        <div id="panel-categories" class="tab-panel" style="display:none;padding:32px;text-align:center;">
+                            <p class="muted">Categories module coming soon.</p>
+                        </div>
 
-                        <div class="pagination">
-                            <span style="font-size:12px;color:#4e444a;">Showing 1 to 4 of 24 entries</span>
-                            <div class="page-numbers">
-                                <span class="page-box" style="opacity:.5;">&lt;</span>
-                                <span class="page-box active">1</span>
-                                <span class="page-box">2</span>
-                                <span class="page-box">3</span>
-                                <span style="padding:0 8px;color:#4e444a;">...</span>
-                                <span class="page-box">&gt;</span>
-                            </div>
+                        <!-- Employees Panel -->
+                        <div id="panel-employees" class="tab-panel" style="display:none;padding:32px;text-align:center;">
+                            <p class="muted">Employees module coming soon.</p>
                         </div>
                     </section>
                 </div>
             </section>
         </main>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Update user profile chip
+            const user = window.AssetFlowAPI.getUser();
+            if (user && user.name) {
+                document.querySelector('#user-chip-container .avatar-text').textContent = user.name.substring(0, 2).toUpperCase();
+                document.getElementById('user-chip-name').textContent = user.name;
+                document.getElementById('user-chip-role').textContent = user.role || 'User';
+            }
+
+            // Tab switching logic
+            const tabs = document.querySelectorAll('#org-tabs .tab');
+            const panels = document.querySelectorAll('.tab-panel');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active from all
+                    tabs.forEach(t => t.classList.remove('active'));
+                    panels.forEach(p => p.style.display = 'none');
+                    
+                    // Add active to clicked
+                    tab.classList.add('active');
+                    const target = document.getElementById(tab.getAttribute('data-target'));
+                    if (target) target.style.display = 'block';
+                });
+            });
+
+            // Load departments from API
+            await loadDepartments();
+        });
+
+        async function loadDepartments() {
+            const tbody = document.getElementById('departments-tbody');
+            const info = document.getElementById('dept-pagination-info');
+            try {
+                const departments = await window.AssetFlowAPI.fetchApi('/departments');
+                
+                if (!departments || departments.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;" class="muted">No departments found.</td></tr>`;
+                    info.textContent = 'Showing 0 entries';
+                    return;
+                }
+
+                tbody.innerHTML = departments.map(dept => {
+                    const statusBadge = dept.is_active 
+                        ? `<span class="badge green"><span class="status-dot"></span>Active</span>`
+                        : `<span class="badge"><span class="status-dot"></span>Inactive</span>`;
+                    
+                    const headName = dept.head ? dept.head.name : '<em class="muted">Unassigned</em>';
+                    const headAvatar = dept.head 
+                        ? `<span class="avatar-mini" style="display:inline-block;width:20px;height:20px;border-radius:4px;background:#e1e3e4;color:#4e444a;text-align:center;line-height:20px;font-size:10px;margin-right:8px;">${dept.head.name.substring(0,2).toUpperCase()}</span>` 
+                        : '';
+                        
+                    const parentName = dept.parent_department ? dept.parent_department.name : '<span class="muted">None</span>';
+
+                    return `
+                        <tr>
+                            <td><span style="display:block;width:16px;height:16px;border:1px solid #d1c3ca;background:#fff;border-radius:2px;"></span></td>
+                            <td><strong>${dept.name}</strong></td>
+                            <td class="mono muted" style="font-size:12px;">${dept.code || '-'}</td>
+                            <td style="display:flex;align-items:center;">${headAvatar}${headName}</td>
+                            <td>${parentName}</td>
+                            <td>${statusBadge}</td>
+                            <td class="right">
+                                <button class="icon-button" style="width:28px;height:28px;"><svg class="small-icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                info.textContent = `Showing 1 to ${departments.length} of ${departments.length} entries`;
+
+            } catch (error) {
+                console.error("Failed to load departments:", error);
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:red;">Error loading departments.</td></tr>`;
+            }
+        }
+
+        // Handle Logout
+        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.AssetFlowAPI.logout();
+        });
+    </script>
 </body>
 </html>

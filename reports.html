@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reports | AssetFlow by odoo</title>
     <link rel="stylesheet" href="assets/pages.css">
+    <script src="assets/api.js"></script>
+    <script>
+        if (window.AssetFlowAPI) {
+            window.AssetFlowAPI.requireAuth();
+        }
+    </script>
 </head>
 <body class="app-page">
     <div class="app-shell">
@@ -136,5 +142,13 @@
             </section>
         </main>
     </div>
+
+    <script>
+        // Handle Logout
+        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.AssetFlowAPI.logout();
+        });
+    </script>
 </body>
 </html>

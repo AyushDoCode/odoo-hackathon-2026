@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resource Booking | AssetFlow by odoo</title>
     <link rel="stylesheet" href="assets/pages.css">
+    <script src="assets/api.js"></script>
+    <script>
+        if (window.AssetFlowAPI) {
+            window.AssetFlowAPI.requireAuth();
+        }
+    </script>
 </head>
 <body class="app-page">
     <div class="app-shell">
@@ -49,9 +55,9 @@
                     <button class="icon-button"><img src="assets/icons/icon-bell.svg" alt=""><span class="dot"></span></button>
                     <button class="icon-button"><img src="assets/icons/icon-help.svg" alt=""></button>
                     <div style="width:1px;height:32px;background:#e9ecef;"></div>
-                    <div class="user-chip">
-                        <div class="avatar-text" style="width:32px;height:32px;border-radius:12px;font-size:11px;background:#e9ecef;color:#57344f;">A</div>
-                        <span class="tiny-caps" style="color:#57344f;">Admin</span>
+                    <div class="user-chip" id="user-chip-container">
+                        <div class="avatar-text" style="width:32px;height:32px;border-radius:12px;font-size:11px;background:#e9ecef;color:#57344f;">US</div>
+                        <span class="tiny-caps" style="color:#57344f;" id="user-chip-name">User</span>
                     </div>
                 </div>
             </header>
@@ -193,5 +199,22 @@
             </section>
         </main>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Update user profile chip
+            const user = window.AssetFlowAPI.getUser();
+            if (user && user.name) {
+                document.querySelector('#user-chip-container .avatar-text').textContent = user.name.substring(0, 2).toUpperCase();
+                document.getElementById('user-chip-name').textContent = user.name;
+            }
+        });
+
+        // Handle Logout
+        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.AssetFlowAPI.logout();
+        });
+    </script>
 </body>
 </html>
