@@ -112,6 +112,9 @@ class AllocationService:
         if not self._may_request(allocation, actor):
             await self.session.rollback()
             raise AllocationPermissionError("Only the holder or responsible manager may request transfer")
+        if allocation.to_user_id == data.to_user_id:
+            await self.session.rollback()
+            raise AllocationError("Transfer target must be different from the current holder")
 
         allocation.status = AllocationStatus.TRANSFER_REQUESTED
         allocation.transfer_to_user_id = data.to_user_id

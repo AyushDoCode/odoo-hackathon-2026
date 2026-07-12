@@ -49,7 +49,17 @@ class DashboardService:
             )
             return int((await self.session.execute(statement)).scalar_one())
 
-        assets_allocated = await allocation_count(AllocationStatus.ACTIVE)
+        allocated_statement = select(func.count()).select_from(Allocation).where(
+            Allocation.status.in_(
+                [
+                    AllocationStatus.ACTIVE,
+                    AllocationStatus.TRANSFER_REQUESTED,
+                    AllocationStatus.RETURN_REQUESTED,
+                ]
+            ),
+            *allocation_filters,
+        )
+        assets_allocated = int((await self.session.execute(allocated_statement)).scalar_one())
         day_start = datetime.combine(today, datetime.min.time(), tzinfo=UTC)
         maintenance_statement = select(func.count()).select_from(MaintenanceRequest).where(
             MaintenanceRequest.opened_at >= day_start, *maintenance_filters

@@ -27,7 +27,7 @@ async def test_two_concurrent_overlapping_bookings_only_one_succeeds(db_session,
     overlapping_start = start + timedelta(minutes=30)
     overlapping_end = overlapping_start + timedelta(hours=1)
 
-    async def _book(user_id, window_start, window_end):
+    async def _book(user, window_start, window_end):
         async with session_factory() as session:
             service = BookingService(session)
             data = BookingCreate(
@@ -37,15 +37,15 @@ async def test_two_concurrent_overlapping_bookings_only_one_succeeds(db_session,
                 purpose="test",
             )
             try:
-                booking = await service.create_booking(data, created_by=user_id)
+                booking = await service.create_booking(data, actor=user)
                 return ("ok", booking)
             except BookingError as exc:
                 return ("error", str(exc))
 
     try:
         results = await asyncio.gather(
-            _book(user_a_id, start, end),
-            _book(user_b_id, overlapping_start, overlapping_end),
+            _book(user_a, start, end),
+            _book(user_b, overlapping_start, overlapping_end),
         )
 
         outcomes = [r[0] for r in results]
@@ -75,11 +75,11 @@ async def test_back_to_back_bookings_do_not_overlap(db_session, session_factory)
         service = BookingService(db_session)
         first = await service.create_booking(
             BookingCreate(resource_id=asset_id, start_time=start, end_time=end),
-            created_by=user_a_id,
+            actor=user_a,
         )
         second = await service.create_booking(
             BookingCreate(resource_id=asset_id, start_time=next_start, end_time=next_end),
-            created_by=user_a_id,
+            actor=user_a,
         )
         assert first.id != second.id
     finally:

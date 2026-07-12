@@ -9,7 +9,7 @@ from app.modules.activity.service import record as record_activity
 from app.modules.allocations.service import AllocationService
 from app.modules.assets.models import AssetStatus
 from app.modules.assets.repository import AssetRepository
-from app.modules.assets.service import AssetService
+from app.modules.assets.service import AssetConflictError, AssetService
 from app.modules.audit.models import AuditCycle, AuditCycleStatus, AuditItem, VerificationResult
 from app.modules.audit.repository import AuditRepository
 from app.modules.audit.schemas import (
@@ -69,6 +69,16 @@ class AuditService:
             )
             self.repository.add_item(item)
 
+        await record_activity(
+            self.session,
+            actor_id=created_by,
+            action_type="audit.cycle_created",
+            category="audit",
+            target_type="audit_cycle",
+            target_id=cycle.id,
+            message=f"Audit cycle {cycle.id} created",
+        )
+
         await self.session.commit()
         return await self.repository.get_cycle(cycle.id)
 
@@ -92,6 +102,15 @@ class AuditService:
         item.resolution_notes = None
         item.resolution_approved_by = None
         item.resolution_approved_at = None
+        await record_activity(
+            self.session,
+            actor_id=actor.id,
+            action_type="audit.item_verified",
+            category="audit",
+            target_type="audit_item",
+            target_id=item.id,
+            message=f"Audit item {item.id} marked {data.verification.value}",
+        )
         await self.session.commit()
         await self.session.refresh(item)
         return item
@@ -110,11 +129,20 @@ class AuditService:
         item.resolution_notes = data.resolution_notes
         item.resolution_approved_by = actor.id
         item.resolution_approved_at = datetime.now(UTC)
+        await record_activity(
+            self.session,
+            actor_id=actor.id,
+            action_type="audit.discrepancy_approved",
+            category="approvals",
+            target_type="audit_item",
+            target_id=item.id,
+            message=f"Discrepancy resolution approved for audit item {item.id}",
+        )
         await self.session.commit()
         await self.session.refresh(item)
         return item
 
-    async def close_cycle(self, cycle_id: UUID) -> AuditCycle:
+    async def close_cycle(self, cycle_id: UUID, *, actor_id: UUID) -> AuditCycle:
         cycle = await self.repository.get_cycle_locked(cycle_id)
         if cycle is None:
             raise AuditError("Audit cycle not found")
@@ -133,7 +161,20 @@ class AuditService:
             raise AuditError("Every discrepancy must be approved by an Asset Manager before closing")
         for item in items:
             if item.verification == VerificationResult.MISSING:
-                await self.assets.transition_status(item.asset_id, AssetStatus.LOST)
+                try:
+                    await self.assets.transition_status(
+                        item.asset_id,
+                        AssetStatus.LOST,
+                        expected_current={
+                            AssetStatus.AVAILABLE,
+                            AssetStatus.ALLOCATED,
+                            AssetStatus.RESERVED,
+                            AssetStatus.MAINTENANCE,
+                            AssetStatus.LOST,
+                        },
+                    )
+                except AssetConflictError as exc:
+                    raise AuditError(str(exc)) from exc
                 await record_activity(
                     self.session,
                     actor_id=cycle.created_by,
@@ -147,7 +188,19 @@ class AuditService:
                 await self.allocation_service.close_for_maintenance(
                     item.asset_id, actor_id=item.resolution_approved_by or cycle.created_by
                 )
-                await self.assets.transition_status(item.asset_id, AssetStatus.MAINTENANCE)
+                try:
+                    await self.assets.transition_status(
+                        item.asset_id,
+                        AssetStatus.MAINTENANCE,
+                        expected_current={
+                            AssetStatus.AVAILABLE,
+                            AssetStatus.ALLOCATED,
+                            AssetStatus.RESERVED,
+                            AssetStatus.MAINTENANCE,
+                        },
+                    )
+                except AssetConflictError as exc:
+                    raise AuditError(str(exc)) from exc
                 await record_activity(
                     self.session,
                     actor_id=cycle.created_by,
@@ -159,6 +212,15 @@ class AuditService:
                 )
 
         cycle.status = AuditCycleStatus.CLOSED
+        await record_activity(
+            self.session,
+            actor_id=actor_id,
+            action_type="audit.cycle_closed",
+            category="audit",
+            target_type="audit_cycle",
+            target_id=cycle.id,
+            message=f"Audit cycle {cycle.id} closed",
+        )
         await self.session.commit()
         return await self.repository.get_cycle(cycle_id)
 

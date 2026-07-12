@@ -27,8 +27,12 @@ class BookingCreate(BaseModel):
 
     @model_validator(mode="after")
     def _check_window(self) -> "BookingCreate":
+        if self.start_time.tzinfo is None or self.end_time.tzinfo is None:
+            raise ValueError("start_time and end_time must include a timezone")
         if self.end_time <= self.start_time:
             raise ValueError("end_time must be after start_time")
+        if self.start_time <= datetime.now(UTC):
+            raise ValueError("start_time must be in the future")
         return self
 
 

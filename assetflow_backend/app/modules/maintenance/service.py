@@ -157,7 +157,7 @@ class MaintenanceService:
         return request
 
     async def assign_technician(
-        self, request_id: UUID, technician_id: UUID
+        self, request_id: UUID, technician_id: UUID, *, actor_id: UUID
     ) -> MaintenanceRequest:
         request = await self.repository.get_by_id(request_id)
         if request is None or request.status != MaintenanceStatus.APPROVED:
@@ -168,9 +168,19 @@ class MaintenanceService:
 
         request.technician_id = technician_id
         request.status = MaintenanceStatus.TECHNICIAN_ASSIGNED
+        await record_activity(
+            self.session,
+            actor_id=actor_id,
+            action_type="maintenance.technician_assigned",
+            category="alerts",
+            target_type="maintenance_request",
+            target_id=request.id,
+            message=f"Technician {technician_id} assigned to maintenance request {request.id}",
+        )
         await notify(
             self.session,
             recipient_id=technician_id,
+            actor_id=actor_id,
             action_type="maintenance.assigned",
             category="alerts",
             target_type="maintenance_request",

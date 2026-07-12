@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.activity.service import record as record_activity
 from app.modules.assets.models import Asset, AssetStatus
 from app.modules.assets.repository import AssetRepository
 from app.modules.assets.schemas import AssetCreate, AssetUpdate
@@ -87,6 +88,15 @@ class AssetService:
             )
             try:
                 asset = await self.repository.create(asset)
+                await record_activity(
+                    self.session,
+                    actor_id=created_by,
+                    action_type="asset.registered",
+                    category="assets",
+                    target_type="asset",
+                    target_id=asset.id,
+                    message=f"Asset {tag} registered",
+                )
                 await self.session.commit()
                 return asset
             except IntegrityError as exc:
@@ -94,10 +104,21 @@ class AssetService:
                 await self.session.rollback()
         raise AssetConflictError("Could not generate a unique asset tag") from last_error
 
-    async def update_asset(self, asset: Asset, data: AssetUpdate) -> Asset:
+    async def update_asset(
+        self, asset: Asset, data: AssetUpdate, *, actor_id: UUID | None = None
+    ) -> Asset:
         updates = data.model_dump(exclude_unset=True)
         for field_name, value in updates.items():
             setattr(asset, field_name, value)
+        await record_activity(
+            self.session,
+            actor_id=actor_id,
+            action_type="asset.updated",
+            category="assets",
+            target_type="asset",
+            target_id=asset.id,
+            message=f"Asset {asset.tag} updated",
+        )
         await self.session.commit()
         await self.session.refresh(asset, attribute_names=["category"])
         return asset
@@ -125,7 +146,9 @@ class AssetService:
         await self.session.flush()
         return asset
 
-    async def set_manual_status(self, asset_id: UUID, new_status: AssetStatus) -> Asset:
+    async def set_manual_status(
+        self, asset_id: UUID, new_status: AssetStatus, *, actor_id: UUID | None = None
+    ) -> Asset:
         """Admin/Asset Manager directly setting Available/Reserved/Retired/Disposed --
         e.g. reserving an asset for a future purpose outside the booking system, or
         retiring/disposing an asset at end of life. Never used to set ALLOCATED,
@@ -137,6 +160,15 @@ class AssetService:
             )
         asset = await self.transition_status(
             asset_id, new_status, expected_current=_MANUALLY_SETTABLE_FROM
+        )
+        await record_activity(
+            self.session,
+            actor_id=actor_id,
+            action_type="asset.status_changed",
+            category="assets",
+            target_type="asset",
+            target_id=asset.id,
+            message=f"Asset {asset.tag} status changed to {new_status.value}",
         )
         await self.session.commit()
         return asset

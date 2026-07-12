@@ -20,8 +20,16 @@ class UserService:
     async def get_user_by_email(self, email: str) -> User | None:
         return await self.repository.get_by_email(email)
 
-    async def list_users(self, *, offset: int = 0, limit: int = 100) -> list[User]:
-        return await self.repository.list(offset=offset, limit=limit)
+    async def list_users(
+        self,
+        *,
+        department_id: UUID | None = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> list[User]:
+        return await self.repository.list(
+            department_id=department_id, offset=offset, limit=limit
+        )
 
     async def create_user(self, data: UserCreate) -> User:
         user = User(**data.model_dump())

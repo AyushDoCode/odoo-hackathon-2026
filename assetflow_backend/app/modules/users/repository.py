@@ -26,8 +26,17 @@ class UserRepository:
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
-    async def list(self, *, offset: int = 0, limit: int = 100) -> list[User]:
-        statement = select(User).offset(offset).limit(limit)
+    async def list(
+        self,
+        *,
+        department_id: UUID | None = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> list[User]:
+        statement = select(User)
+        if department_id is not None:
+            statement = statement.where(User.department_id == department_id)
+        statement = statement.offset(offset).limit(limit)
         result = await self.session.execute(statement)
         return result.scalars().all()
 

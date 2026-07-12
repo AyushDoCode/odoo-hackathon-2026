@@ -1,94 +1,123 @@
 # AssetFlow Backend
 
-AssetFlow is a FastAPI backend for building asset management and workflow automation features. The project is structured to support a clean API layer, typed configuration, database migrations, and testable application modules.
+FastAPI backend for the AssetFlow Enterprise Asset and Resource Management System.
+It implements the hackathon problem statement without purchasing, invoicing, accounting,
+or hosted runtime integrations.
 
-## Tech Stack
+## Run the API
 
-- FastAPI
-- Uvicorn
-- SQLAlchemy
-- Alembic
-- Pydantic Settings
-- Pytest
-- Black
-- Ruff
-- Mypy
+Python 3.12 or newer is required.
 
-## Project Structure
-
-```text
-assetflow_backend/
-├── alembic/
-├── app/
-│   ├── api/
-│   ├── core/
-│   ├── database/
-│   ├── middleware/
-│   ├── modules/
-│   ├── utils/
-│   └── main.py
-├── tests/
-├── pyproject.toml
-├── requirements.txt
-└── README.md
-```
-
-## Setup Instructions
-
-1. Create and activate a Python 3.12+ virtual environment.
-2. Install the project with development tools:
-
-	```bash
-	pip install -e .[dev]
-	```
-
-3. Configure environment variables if needed by copying `.env.example` to `.env`.
-
-## Run Commands
-
-Start the API server in development:
-
-```bash
+```powershell
+Copy-Item .env.example .env
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e ".[dev]"
+alembic upgrade head
+python -m app.scripts.bootstrap_admin
 uvicorn app.main:app --reload
 ```
 
-Run the test suite:
+The current development `.env` may point to Railway. The project deployment uses the
+local MySQL and local upload volumes defined in `docker-compose.yml`:
 
-```bash
-pytest
+```powershell
+docker compose up --build
 ```
 
-Format the codebase:
+No CDN, external authentication, cloud file storage, email provider, analytics service,
+or background-job service is required. Ensure the Python packages and `mysql:8` image are
+cached before an offline demonstration.
 
-```bash
-black .
+## Frontend handoff
+
+When the API is running:
+
+- Swagger UI: `http://localhost:8000/docs`
+- OpenAPI JSON: `http://localhost:8000/openapi.json`
+- Health check: `http://localhost:8000/health`
+
+Send `Authorization: Bearer <access_token>` on protected endpoints. Allowed frontend
+origins are configured with the comma-separated `CORS_ORIGINS` setting.
+
+File uploads accept JPEG, PNG, and PDF files up to `MAX_UPLOAD_BYTES`. Upload first with
+`POST /files`, then store its returned local URL in an asset or maintenance request.
+
+For the POC, `POST /auth/forgot-password` returns a one-time token directly so password
+reset works without an email provider. A production system must deliver that token through
+a private channel instead of returning it to the browser.
+
+## Roles
+
+| Role | Core permissions |
+| --- | --- |
+| Admin | Organization setup, employee role assignment, audit cycles, organization analytics |
+| Asset Manager | Asset registration/allocation, transfer and return approval, maintenance approval, discrepancy resolution, reports |
+| Department Head | Department-scoped assets, transfers, bookings, and audit visibility |
+| Employee | Own allocated assets, bookings, maintenance requests, transfer/return requests, and notifications |
+
+Signup always creates an `EMPLOYEE`; roles can only be changed through the Admin-only
+employee directory endpoint. The initial Admin is created idempotently with:
+
+```powershell
+python -m app.scripts.bootstrap_admin
 ```
 
-Lint with Ruff:
+## Required workflows
 
-```bash
-ruff check .
-```
+### Organization setup
 
-Run static typing checks:
+- `GET/POST/PATCH /departments`
+- `GET/POST/PATCH /categories`
+- `GET/PATCH /users`
 
-```bash
+Department and category writes, employee activation, department assignment, and role
+promotion are Admin-only.
+
+### Assets and allocation
+
+- Assets receive an automatic `AF-0001` style tag.
+- Asset search supports tag, serial number, QR code, category, status, department, and location.
+- Allocation locks the asset row and rejects double allocation.
+- A holder requests transfer; an Asset Manager/Admin or the responsible Department Head approves it.
+- A holder requests return; an Asset Manager/Admin approves condition check-in before the asset becomes Available.
+
+### Resource booking
+
+- Only assets marked `is_bookable` can be booked.
+- Overlap uses a half-open interval: `[start_time, end_time)`, so adjacent bookings are valid.
+- Returned API status is derived as `UPCOMING`, `ONGOING`, `COMPLETED`, or `CANCELLED`.
+- Only the owner, responsible Department Head, Asset Manager, or Admin can cancel/reschedule.
+
+### Maintenance
+
+Workflow: `PENDING -> APPROVED/REJECTED -> TECHNICIAN_ASSIGNED -> IN_PROGRESS -> RESOLVED`.
+
+Approval checks in an active allocation before moving the asset to Maintenance. Only the
+assigned technician or Asset Manager/Admin can start or resolve work. Resolution returns
+the asset to Available.
+
+### Audit
+
+Admin creates a scoped cycle and assigns auditors. All items must be verified. Missing or
+damaged discrepancies require Asset Manager/Admin resolution approval before Admin can
+close the cycle. Closing locks the cycle and updates affected asset states.
+
+### Notifications and activity
+
+- `GET /activity/notifications` returns only the current user's notifications and also
+  materializes due booking reminders and overdue-return alerts without an external scheduler.
+- `POST /activity/notifications/{id}/read` marks a personal notification read.
+- `GET /activity/logs` is the privileged organization audit log.
+
+## Verification
+
+```powershell
+pytest -q
+python -m compileall -q app tests
+ruff check app tests
 mypy app tests
 ```
 
-## API Documentation URL
-
-When the server is running locally, interactive API documentation is available at:
-
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
-
-## Future Modules
-
-- Authentication and authorization
-- Asset inventory management
-- Approval and workflow engine
-- Reporting and analytics
-- Audit logging
-- Background jobs and scheduled tasks
-- External integrations and webhooks
+The integration tests use the `DATABASE_URL` configured in `.env`; never point tests at a
+production database.

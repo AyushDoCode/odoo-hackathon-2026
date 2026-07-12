@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -104,6 +104,12 @@ class BookingService:
             )
         )
 
+    @staticmethod
+    def _as_utc(value: datetime) -> datetime:
+        if value.tzinfo is None:
+            raise BookingError("Booking times must include a timezone")
+        return value.astimezone(UTC)
+
     async def cancel_booking(self, booking_id: UUID, *, actor: User) -> Booking:
         booking = await self.repository.get_by_id(booking_id)
         if booking is None:
@@ -112,6 +118,13 @@ class BookingService:
             raise BookingPermissionError("You may only cancel your own or your department's booking")
         if booking.status == BookingStatus.CANCELLED:
             raise BookingError("Booking is already cancelled")
+        booking_end = booking.end_time
+        if booking_end.tzinfo is None:
+            booking_end = booking_end.replace(tzinfo=UTC)
+        else:
+            booking_end = booking_end.astimezone(UTC)
+        if booking_end <= datetime.now(UTC):
+            raise BookingError("Completed bookings cannot be cancelled")
         booking.status = BookingStatus.CANCELLED
         await record_activity(
             self.session,
@@ -146,8 +159,12 @@ class BookingService:
             raise BookingPermissionError("You may only reschedule your own or your department's booking")
         if booking.status == BookingStatus.CANCELLED:
             raise BookingError("Cancelled bookings cannot be rescheduled")
+        new_start = self._as_utc(new_start)
+        new_end = self._as_utc(new_end)
         if new_end <= new_start:
             raise BookingError("end_time must be after start_time")
+        if new_start <= datetime.now(UTC):
+            raise BookingError("start_time must be in the future")
 
         resource = await self.assets.get_by_id_for_update(booking.resource_id)
         if resource is None:
@@ -165,6 +182,15 @@ class BookingService:
 
         booking.start_time = new_start
         booking.end_time = new_end
+        await record_activity(
+            self.session,
+            actor_id=actor.id,
+            action_type="booking.rescheduled",
+            category="bookings",
+            target_type="booking",
+            target_id=booking.id,
+            message=f"Booking {booking.id} rescheduled",
+        )
         await self.session.commit()
         await self.session.refresh(booking)
         return booking

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-import app.database.models_registry  # noqa: F401 - populate ORM mapper registry
+import app.database.models_registry as _models_registry  # noqa: F401
 from app.api import api_router
 from app.core.config import settings
 

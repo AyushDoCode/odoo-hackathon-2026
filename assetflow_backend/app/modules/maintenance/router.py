@@ -105,10 +105,13 @@ async def assign_technician(
     request_id: UUID,
     data: TechnicianAssign,
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> MaintenanceRequestRead:
     service = MaintenanceService(session)
     try:
-        request = await service.assign_technician(request_id, data.technician_id)
+        request = await service.assign_technician(
+            request_id, data.technician_id, actor_id=current_user.id
+        )
     except MaintenanceError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     return MaintenanceRequestRead.model_validate(request)
@@ -118,7 +121,7 @@ async def assign_technician(
 async def start_progress(
     request_id: UUID,
     session: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> MaintenanceRequestRead:
     service = MaintenanceService(session)
     try:

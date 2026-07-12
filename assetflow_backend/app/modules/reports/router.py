@@ -43,18 +43,18 @@ async def export_csv(
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(["section", "field1", "field2", "field3", "value"])
-    for row in report.utilization_by_department:
-        writer.writerow(["utilization_by_department", row.department_name, "", "", row.active_allocation_count])
-    for row in report.most_used_assets:
-        writer.writerow(["most_used_assets", row.asset_tag, row.asset_name, "", row.usage_count])
-    for row in report.idle_assets:
-        writer.writerow(["idle_assets", row.asset_tag, row.asset_name, "", row.usage_count])
-    for row in report.maintenance_frequency:
-        writer.writerow(["maintenance_frequency", row.asset_tag, row.category_name, "", row.request_count])
-    for row in report.due_for_maintenance_or_retirement:
-        writer.writerow(["due_for_maintenance_or_retirement", row.asset_tag, row.asset_name, row.reason, ""])
-    for row in report.booking_heatmap:
-        writer.writerow(["booking_heatmap", row.hour_of_day, "", "", row.booking_count])
+    for utilization in report.utilization_by_department:
+        writer.writerow(["utilization_by_department", utilization.department_name, "", "", utilization.active_allocation_count])
+    for used_asset in report.most_used_assets:
+        writer.writerow(["most_used_assets", used_asset.asset_tag, used_asset.asset_name, "", used_asset.usage_count])
+    for idle_asset in report.idle_assets:
+        writer.writerow(["idle_assets", idle_asset.asset_tag, idle_asset.asset_name, "", idle_asset.usage_count])
+    for frequency in report.maintenance_frequency:
+        writer.writerow(["maintenance_frequency", frequency.asset_tag, frequency.category_name, "", frequency.request_count])
+    for due_asset in report.due_for_maintenance_or_retirement:
+        writer.writerow(["due_for_maintenance_or_retirement", due_asset.asset_tag, due_asset.asset_name, due_asset.reason, ""])
+    for bucket in report.booking_heatmap:
+        writer.writerow(["booking_heatmap", bucket.hour_of_day, "", "", bucket.booking_count])
 
     buffer.seek(0)
     return StreamingResponse(

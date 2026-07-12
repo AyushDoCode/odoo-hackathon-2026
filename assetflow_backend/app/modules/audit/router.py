@@ -33,7 +33,11 @@ async def create_cycle(
     current_user: User = Depends(get_current_user),
 ) -> AuditCycleDetail:
     service = AuditService(session)
-    cycle = await service.create_cycle(data, created_by=current_user.id)
+    try:
+        cycle = await service.create_cycle(data, created_by=current_user.id)
+    except AuditError as exc:
+        await session.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     return AuditCycleDetail.model_validate(cycle)
 
 
@@ -95,12 +99,15 @@ async def approve_discrepancy(
     dependencies=[Depends(require_role(UserRole.ADMIN))],
 )
 async def close_cycle(
-    cycle_id: UUID, session: AsyncSession = Depends(get_db)
+    cycle_id: UUID,
+    session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> AuditCycleDetail:
     service = AuditService(session)
     try:
-        cycle = await service.close_cycle(cycle_id)
+        cycle = await service.close_cycle(cycle_id, actor_id=current_user.id)
     except AuditError as exc:
+        await session.rollback()
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     return AuditCycleDetail.model_validate(cycle)
 

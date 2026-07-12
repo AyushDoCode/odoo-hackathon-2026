@@ -85,12 +85,13 @@ async def update_asset(
     asset_id: UUID,
     data: AssetUpdate,
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> AssetRead:
     service = AssetService(session)
     asset = await service.get_asset(asset_id)
     if asset is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Asset not found")
-    asset = await service.update_asset(asset, data)
+    asset = await service.update_asset(asset, data, actor_id=current_user.id)
     return AssetRead.model_validate(asset)
 
 
@@ -103,6 +104,7 @@ async def set_asset_status(
     asset_id: UUID,
     new_status: AssetStatus = Body(embed=True, alias="status"),
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> AssetRead:
     """Manually set Available/Reserved/Retired/Disposed. Allocated/Maintenance/Lost are
     set only by their owning workflow (allocations/maintenance/audit) and are rejected
@@ -110,9 +112,11 @@ async def set_asset_status(
     """
     service = AssetService(session)
     try:
-        asset = await service.set_manual_status(asset_id, new_status)
+        await service.set_manual_status(asset_id, new_status, actor_id=current_user.id)
     except AssetConflictError as exc:
         await session.rollback()
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
-    asset = await service.get_asset(asset_id)
-    return AssetRead.model_validate(asset)
+    refreshed_asset = await service.get_asset(asset_id)
+    if refreshed_asset is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Asset not found")
+    return AssetRead.model_validate(refreshed_asset)

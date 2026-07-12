@@ -76,7 +76,13 @@ class AssetRepository:
             statement = statement.join(
                 Allocation,
                 (Allocation.asset_id == Asset.id)
-                & (Allocation.status == AllocationStatus.ACTIVE)
+                & Allocation.status.in_(
+                    [
+                        AllocationStatus.ACTIVE,
+                        AllocationStatus.TRANSFER_REQUESTED,
+                        AllocationStatus.RETURN_REQUESTED,
+                    ]
+                )
                 & (Allocation.department_id == department_id),
             )
         if visible_to_user_id is not None or visible_to_department_id is not None:

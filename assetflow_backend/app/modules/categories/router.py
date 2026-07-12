@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, require_role
+from app.modules.activity.service import record as record_activity
 from app.database.session import get_db
 from app.modules.categories.schemas import AssetCategoryCreate, AssetCategoryRead, AssetCategoryUpdate
 from app.modules.categories.service import AssetCategoryService
@@ -31,12 +32,23 @@ async def list_categories(
 async def create_category(
     data: AssetCategoryCreate,
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> AssetCategoryRead:
     try:
         row = await AssetCategoryService(session).create_category(data)
     except IntegrityError as exc:
         await session.rollback()
         raise HTTPException(status.HTTP_409_CONFLICT, "Category name already exists") from exc
+    await record_activity(
+        session,
+        actor_id=current_user.id,
+        action_type="category.created",
+        category="organization",
+        target_type="asset_category",
+        target_id=row.id,
+        message=f"Category {row.name} created",
+    )
+    await session.commit()
     return AssetCategoryRead.model_validate(row)
 
 
@@ -45,6 +57,7 @@ async def update_category(
     category_id: UUID,
     data: AssetCategoryUpdate,
     session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> AssetCategoryRead:
     service = AssetCategoryService(session)
     row = await service.get_category(category_id)
@@ -55,4 +68,14 @@ async def update_category(
     except IntegrityError as exc:
         await session.rollback()
         raise HTTPException(status.HTTP_409_CONFLICT, "Category name already exists") from exc
+    await record_activity(
+        session,
+        actor_id=current_user.id,
+        action_type="category.updated",
+        category="organization",
+        target_type="asset_category",
+        target_id=row.id,
+        message=f"Category {row.name} updated",
+    )
+    await session.commit()
     return AssetCategoryRead.model_validate(row)
