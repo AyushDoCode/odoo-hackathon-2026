@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assets | AssetFlow by odoo</title>
+    <link rel="stylesheet" href="assets/pages.css">
+    <script src="assets/api.js"></script>
+    <script>
+        if (window.AssetFlowAPI) {
+            window.AssetFlowAPI.requireAuth();
+        }
+    </script>
+</head>
+<body class="app-page">
+    <div class="app-shell">
+        <aside class="side-nav">
+            <div>
+                <div class="brand">
+                    <div class="brand-row">
+                        <span class="brand-mark square"><img src="assets/icons/nav-org.svg" alt="" style="width:20px;height:18px;"></span>
+                        <div>
+                            <div class="brand-title">AssetFlow</div>
+                            <div class="brand-subtitle caps">Enterprise Management</div>
+                        </div>
+                    </div>
+                </div>
+                <nav class="nav-main">
+                    <ul class="nav-list inset">
+                        <li><a class="nav-link" href="dashboard.html"><img src="assets/icons/nav-dashboard.svg" alt=""><span>Dashboard</span></a></li>
+                        <li><a class="nav-link" href="organization-setup.html"><img src="assets/icons/nav-org.svg" alt=""><span>Organization Setup</span></a></li>
+                        <li><a class="nav-link active" href="assets-directory.html"><img src="assets/icons/nav-assets.svg" alt=""><span>Assets</span></a></li>
+                        <li><a class="nav-link" href="allocation-transfer.html"><img src="assets/icons/nav-allocation.svg" alt=""><span>Allocation &amp; Transfer</span></a></li>
+                        <li><a class="nav-link" href="resource-booking.html"><img src="assets/icons/nav-booking.svg" alt=""><span>Resource Booking</span></a></li>
+                        <li><a class="nav-link" href="maintenance.html"><img src="assets/icons/nav-maintenance.svg" alt=""><span>Maintenance</span></a></li>
+                        <li><a class="nav-link" href="audit.html"><img src="assets/icons/nav-audit.svg" alt=""><span>Audit</span></a></li>
+                        <li><a class="nav-link" href="reports.html"><img src="assets/icons/nav-reports.svg" alt=""><span>Reports</span></a></li>
+                        <li><a class="nav-link" href="notifications.html"><img src="assets/icons/nav-notifications.svg" alt=""><span>Notifications</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="nav-footer">
+                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <header class="topbar">
+                <div class="search-wrap flex">
+                    <input class="search-input" type="text" placeholder="Search assets globally...">
+                    <img class="search-icon" src="assets/icons/ad-search-topbar.svg" alt="">
+                </div>
+                <div class="top-actions">
+                    <button class="icon-button"><img src="assets/icons/ad-bell.svg" alt=""></button>
+                    <button class="icon-button"><img src="assets/icons/ad-help.svg" alt=""></button>
+                    <div style="width:1px;height:32px;background:#e9ecef;"></div>
+                    <div class="user-chip" id="user-chip-container">
+                        <div class="avatar-text">US</div>
+                        <span class="tiny-caps" id="user-chip-name">User</span>
+                    </div>
+                </div>
+            </header>
+
+            <section class="page-content">
+                <div class="content-inner stack-24">
+                    <div class="page-header center">
+                        <div>
+                            <h1 class="page-title">Asset Registrations and Directory</h1>
+                            <p class="page-kicker large">Manage and track all organizational assets.</p>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn primary" id="register-asset-button">Register Asset</button>
+                        </div>
+                    </div>
+
+                    <section class="card card-pad">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+                            <div class="search-wrap" style="width:320px;">
+                                <input class="search-input" type="text" id="asset-search-input" placeholder="Search by tag, serial, or QR code...">
+                                <img class="search-icon" src="assets/icons/ad-search-filter.svg" alt="">
+                            </div>
+                            <div class="btn-row">
+                                <button class="btn soft">Category</button>
+                                <button class="btn soft">Status</button>
+                                <button class="btn soft">Department</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="table-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Tag</th>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Location</th>
+                                    <th class="right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assets-tbody">
+                                <tr>
+                                    <td colspan="6" style="text-align:center;padding:24px;" class="muted">Loading assets...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </section>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Update user profile chip
+            const user = window.AssetFlowAPI.getUser();
+            if (user && user.name) {
+                document.querySelector('#user-chip-container .avatar-text').textContent = user.name.substring(0, 2).toUpperCase();
+                document.getElementById('user-chip-name').textContent = user.name;
+            }
+
+            document.getElementById('register-asset-button').addEventListener('click', registerAsset);
+            document.getElementById('asset-search-input').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') loadAssets(e.target.value.trim());
+            });
+
+            // Load assets from API
+            await loadAssets();
+        });
+
+        async function registerAsset() {
+            try {
+                const categories = await window.AssetFlowAPI.fetchApi('/categories');
+                if (!categories || categories.length === 0) {
+                    window.alert('Create an Asset Category first (Organization Setup > Categories).');
+                    return;
+                }
+                const name = window.prompt('Asset name (e.g. Dell XPS 15 Laptop):');
+                if (!name) return;
+                const names = categories.map((c, i) => `${i + 1}. ${c.name}`).join('\n');
+                const choice = window.prompt(`Category? Enter the number:\n${names}`);
+                const category = categories[parseInt(choice, 10) - 1];
+                if (!category) return;
+                const location = window.prompt('Location (optional):') || null;
+                const bookable = window.confirm('Is this a shared/bookable resource (e.g. a room or vehicle)?');
+
+                await window.AssetFlowAPI.postJson('/assets', {
+                    name,
+                    category_id: category.id,
+                    location,
+                    is_bookable: bookable,
+                });
+                await loadAssets();
+            } catch (error) {
+                window.alert('Failed to register asset: ' + error.message);
+            }
+        }
+
+        async function loadAssets(query) {
+            const tbody = document.getElementById('assets-tbody');
+            try {
+                const path = query ? `/assets?q=${encodeURIComponent(query)}` : '/assets';
+                const assets = await window.AssetFlowAPI.fetchApi(path);
+
+                if (!assets || assets.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;" class="muted">No assets found.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = assets.map(asset => {
+                    let badgeClass = 'badge';
+                    if (asset.status === 'AVAILABLE') badgeClass += ' cyan';
+                    if (asset.status === 'ALLOCATED') badgeClass += ' green';
+                    if (asset.status === 'MAINTENANCE') badgeClass += ' red';
+                    
+                    const categoryName = asset.category ? asset.category.name : '<span class="muted">None</span>';
+
+                    return `
+                        <tr>
+                            <td class="mono muted">${asset.tag || '-'}</td>
+                            <td><strong>${asset.name}</strong></td>
+                            <td class="subtle">${categoryName}</td>
+                            <td><span class="${badgeClass}">${asset.status}</span></td>
+                            <td class="subtle">${asset.location || 'Unknown'}</td>
+                            <td class="right">
+                                <a class="icon-button" style="width:28px;height:28px;display:inline-grid;place-items:center;" href="allocation-transfer.html?asset_id=${asset.id}" title="Allocate / Transfer">
+                                    <svg class="small-icon" viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                                </a>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error("Failed to load assets:", error);
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:red;">Error loading assets.</td></tr>`;
+            }
+        }
+
+        // Handle Logout
+        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.AssetFlowAPI.logout();
+        });
+    </script>
+</body>
+</html>

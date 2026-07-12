@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allocation &amp; Transfer | AssetFlow by odoo</title>
+    <link rel="stylesheet" href="assets/pages.css">
+    <script src="assets/api.js"></script>
+    <script>
+        if (window.AssetFlowAPI) {
+            window.AssetFlowAPI.requireAuth();
+        }
+    </script>
+</head>
+<body class="app-page">
+    <div class="app-shell">
+        <aside class="side-nav">
+            <div>
+                <div class="brand">
+                    <div class="brand-row">
+                        <span class="brand-mark square"><img src="assets/icons/nav-org.svg" alt="" style="width:20px;height:18px;"></span>
+                        <div>
+                            <div class="brand-title">AssetFlow</div>
+                            <div class="brand-subtitle caps">Enterprise Management</div>
+                        </div>
+                    </div>
+                </div>
+                <nav class="nav-main">
+                    <ul class="nav-list inset">
+                        <li><a class="nav-link" href="dashboard.html"><img src="assets/icons/nav-dashboard.svg" alt=""><span>Dashboard</span></a></li>
+                        <li><a class="nav-link" href="organization-setup.html"><img src="assets/icons/nav-org.svg" alt=""><span>Organization Setup</span></a></li>
+                        <li><a class="nav-link" href="assets-directory.html"><img src="assets/icons/nav-assets.svg" alt=""><span>Assets</span></a></li>
+                        <li><a class="nav-link active" href="allocation-transfer.html"><img src="assets/icons/nav-allocation.svg" alt=""><span>Allocation &amp; Transfer</span></a></li>
+                        <li><a class="nav-link" href="resource-booking.html"><img src="assets/icons/nav-booking.svg" alt=""><span>Resource Booking</span></a></li>
+                        <li><a class="nav-link" href="maintenance.html"><img src="assets/icons/nav-maintenance.svg" alt=""><span>Maintenance</span></a></li>
+                        <li><a class="nav-link" href="audit.html"><img src="assets/icons/nav-audit.svg" alt=""><span>Audit</span></a></li>
+                        <li><a class="nav-link" href="reports.html"><img src="assets/icons/nav-reports.svg" alt=""><span>Reports</span></a></li>
+                        <li><a class="nav-link" href="notifications.html"><img src="assets/icons/nav-notifications.svg" alt=""><span>Notifications</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="nav-footer">
+                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <header class="topbar">
+                <h1>Asset Allocation &amp; Transfer</h1>
+                <div class="top-actions">
+                    <button class="icon-button" aria-label="Notifications"><img src="assets/icons/icon-bell.svg" alt=""></button>
+                    <div class="user-chip" id="user-chip-container">
+                        <div class="avatar-text">US</div>
+                        <span class="tiny-caps" id="user-chip-name">User</span>
+                    </div>
+                </div>
+            </header>
+
+            <section class="page-content">
+                <div class="content-inner grid-12" id="no-asset-selected" style="display:none;">
+                    <section class="card soft r8 card-pad" style="grid-column:1/-1;text-align:center;">
+                        <p class="muted">Open this page from the Assets directory (click the transfer icon on any asset row) to allocate or transfer it.</p>
+                        <a class="btn primary" href="assets-directory.html" style="margin-top:12px;display:inline-flex;">Go to Assets</a>
+                    </section>
+                </div>
+                <div class="content-inner grid-12" id="asset-panel">
+                    <div class="col-4 stack-24">
+                        <section class="card soft r8 card-pad">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                                <div>
+                                    <span class="badge small pink mono" id="asset-category-badge">Category</span>
+                                    <h2 style="margin:8px 0 0;font-size:20px;line-height:28px;" id="asset-name">-</h2>
+                                    <p class="mono muted" style="margin:0;font-size:14px;line-height:20px;" id="asset-tag">-</p>
+                                </div>
+                                <svg class="inline-icon" viewBox="0 0 24 24" style="width:36px;height:26px;color:#d1c3ca;"><path d="M4 5h16v11H4z"/><path d="M8 21h8M12 16v5"/></svg>
+                            </div>
+                            <div class="divider" style="margin:17px 0;"></div>
+                            <div class="stack-24" style="gap:12px;">
+                                <div style="display:flex;justify-content:space-between;"><span class="subtle" style="font-size:12px;">Serial Number</span><strong style="font-size:14px;" id="asset-serial">-</strong></div>
+                                <div style="display:flex;justify-content:space-between;"><span class="subtle" style="font-size:12px;">Location</span><strong style="font-size:14px;" id="asset-location">-</strong></div>
+                                <div style="display:flex;justify-content:space-between;align-items:center;"><span class="subtle" style="font-size:12px;">Current Status</span><span class="badge small red mono" id="asset-status-badge">-</span></div>
+                            </div>
+                        </section>
+
+                        <section class="card r8" id="allocation-alert" style="display:none;gap:16px;border-color:#ffdad6;background:rgba(255,218,214,0.2);padding:21px;">
+                            <div style="display:flex;gap:16px;">
+                                <svg class="inline-icon" viewBox="0 0 24 24" style="color:#ba1a1a;flex:0 0 auto;"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+                                <div>
+                                    <h3 id="allocation-alert-title" style="margin:0 0 4px;font-size:16px;font-weight:500;line-height:24px;">-</h3>
+                                    <p class="muted" id="allocation-alert-text" style="margin:0;font-size:14px;line-height:20px;">-</p>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="col-8 stack-24">
+                        <section class="card soft r8 card-pad" id="allocate-panel" style="display:none;">
+                            <h2 style="display:flex;gap:8px;align-items:center;margin:0 0 24px;font-size:20px;line-height:28px;">Allocate Asset</h2>
+                            <div class="form-grid">
+                                <div class="field" style="grid-column:span 2;">
+                                    <label>Assign To (Employee) <span style="color:#ba1a1a;">*</span></label>
+                                    <select class="input-box" id="allocate-to-user" style="width:100%;"></select>
+                                </div>
+                                <div class="field" style="grid-column:span 2;">
+                                    <label>Expected Return Date</label>
+                                    <input class="input-box" type="date" id="allocate-return-date" style="width:100%;">
+                                </div>
+                                <div class="field" style="grid-column:span 2;">
+                                    <label>Reason</label>
+                                    <textarea class="input-box textarea-box" id="allocate-reason" placeholder="Provide a brief reason..."></textarea>
+                                </div>
+                            </div>
+                            <div style="display:flex;justify-content:flex-end;gap:12px;border-top:1px solid var(--border);margin-top:24px;padding-top:17px;">
+                                <button class="btn primary" id="allocate-submit">Allocate Asset</button>
+                            </div>
+                        </section>
+
+                        <section class="card soft r8 card-pad" id="transfer-panel" style="display:none;">
+                            <h2 style="display:flex;gap:8px;align-items:center;margin:0 0 24px;font-size:20px;line-height:28px;">
+                                <svg class="inline-icon" viewBox="0 0 24 24" style="color:#57344f;"><path d="M7 7h10M7 7l3-3M7 7l3 3M17 17H7M17 17l-3-3M17 17l-3 3"/></svg>
+                                Transfer / Return Request
+                            </h2>
+                            <div class="form-grid">
+                                <div class="field">
+                                    <label>From (Current Assignee)</label>
+                                    <div class="input-box disabled" id="transfer-from">-</div>
+                                </div>
+                                <div class="field">
+                                    <label>To (New Assignee)</label>
+                                    <select class="input-box" id="transfer-to-user" style="width:100%;"></select>
+                                </div>
+                                <div class="field" style="grid-column:span 2;">
+                                    <label>Reason for Transfer</label>
+                                    <textarea class="input-box textarea-box" id="transfer-reason" placeholder="Provide a brief reason for this transfer..."></textarea>
+                                </div>
+                            </div>
+                            <div style="display:flex;justify-content:flex-end;gap:12px;border-top:1px solid var(--border);margin-top:24px;padding-top:17px;flex-wrap:wrap;">
+                                <button class="btn soft" id="return-submit">Request Return</button>
+                                <button class="btn primary" id="transfer-submit">Submit Transfer Request
+                                    <svg class="small-icon" viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                                </button>
+                            </div>
+                        </section>
+
+                        <section class="card r8" id="pending-approval-panel" style="display:none;padding:21px;">
+                            <h3 style="margin:0 0 8px;">Pending Approval</h3>
+                            <p class="muted" id="pending-approval-text" style="margin:0 0 12px;">-</p>
+                            <button class="btn primary" id="pending-approval-approve">Approve</button>
+                        </section>
+
+                        <section class="card r8" style="overflow:hidden;">
+                            <div style="border-bottom:1px solid var(--border);padding:20px;">
+                                <h2 style="display:flex;align-items:center;gap:8px;margin:0;font-size:20px;line-height:28px;">
+                                    <svg class="inline-icon" viewBox="0 0 24 24" style="color:#57344f;"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>
+                                    Allocation History
+                                </h2>
+                            </div>
+                            <div class="history-list" id="history-list">
+                                <p class="muted" style="padding:20px;">Loading history...</p>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const STATUS_LABELS = {
+            AVAILABLE: 'Available', ALLOCATED: 'Allocated', RESERVED: 'Reserved',
+            MAINTENANCE: 'Under Maintenance', LOST: 'Lost', RETIRED: 'Retired', DISPOSED: 'Disposed',
+        };
+        let usersById = {};
+        let currentAsset = null;
+        let currentAllocation = null;
+        const currentUser = window.AssetFlowAPI.getUser();
+        const isManager = currentUser && ['ADMIN', 'ASSET_MANAGER', 'DEPARTMENT_HEAD'].includes(currentUser.role);
+
+        function userName(id) {
+            if (!id) return null;
+            const u = usersById[id];
+            return u ? u.name : id;
+        }
+
+        function formatDate(value) {
+            if (!value) return '-';
+            return new Date(value).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const user = window.AssetFlowAPI.getUser();
+            if (user && user.name) {
+                document.querySelector('#user-chip-container .avatar-text').textContent = user.name.substring(0, 2).toUpperCase();
+                document.getElementById('user-chip-name').textContent = user.name;
+            }
+
+            const assetId = new URLSearchParams(window.location.search).get('asset_id');
+            if (!assetId) {
+                document.getElementById('no-asset-selected').style.display = 'grid';
+                document.getElementById('asset-panel').style.display = 'none';
+                return;
+            }
+
+            await loadPage(assetId);
+
+            document.getElementById('allocate-submit').addEventListener('click', () => allocateAsset(assetId));
+            document.getElementById('transfer-submit').addEventListener('click', () => submitTransfer(assetId));
+            document.getElementById('return-submit').addEventListener('click', () => submitReturn(assetId));
+        });
+
+        async function loadPage(assetId) {
+            try {
+                const [asset, history, users] = await Promise.all([
+                    window.AssetFlowAPI.fetchApi(`/assets/${assetId}`),
+                    window.AssetFlowAPI.fetchApi(`/allocations/asset/${assetId}/history`),
+                    window.AssetFlowAPI.fetchApi('/users'),
+                ]);
+                currentAsset = asset;
+                usersById = {};
+                users.forEach(u => { usersById[u.id] = u; });
+
+                renderAssetCard(asset);
+                populateUserSelect('allocate-to-user', users);
+
+                currentAllocation = history.find(a => ['ACTIVE', 'TRANSFER_REQUESTED', 'RETURN_REQUESTED'].includes(a.status)) || null;
+                renderActionPanels(asset, currentAllocation, users);
+                renderHistory(history);
+            } catch (error) {
+                console.error('Failed to load allocation page:', error);
+                window.alert('Failed to load asset: ' + error.message);
+            }
+        }
+
+        function renderAssetCard(asset) {
+            document.getElementById('asset-category-badge').textContent = asset.category ? asset.category.name : 'Uncategorized';
+            document.getElementById('asset-name').textContent = asset.name;
+            document.getElementById('asset-tag').textContent = asset.tag;
+            document.getElementById('asset-serial').textContent = asset.serial_number || 'Not recorded';
+            document.getElementById('asset-location').textContent = asset.location || 'Unknown';
+            document.getElementById('asset-status-badge').textContent = STATUS_LABELS[asset.status] || asset.status;
+        }
+
+        function populateUserSelect(selectId, users, excludeId) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = users
+                .filter(u => u.is_active && u.id !== excludeId)
+                .map(u => `<option value="${u.id}">${u.name} (${u.role})</option>`)
+                .join('');
+        }
+
+        function renderActionPanels(asset, allocation, users) {
+            const alertBox = document.getElementById('allocation-alert');
+            const allocatePanel = document.getElementById('allocate-panel');
+            const transferPanel = document.getElementById('transfer-panel');
+            const pendingPanel = document.getElementById('pending-approval-panel');
+            alertBox.style.display = 'none';
+            allocatePanel.style.display = 'none';
+            transferPanel.style.display = 'none';
+            pendingPanel.style.display = 'none';
+
+            if (asset.status === 'AVAILABLE' && !allocation) {
+                allocatePanel.style.display = 'block';
+                return;
+            }
+
+            if (!allocation) {
+                alertBox.style.display = 'flex';
+                document.getElementById('allocation-alert-title').textContent = 'Not Allocatable';
+                document.getElementById('allocation-alert-text').textContent =
+                    `This asset is currently ${(STATUS_LABELS[asset.status] || asset.status).toLowerCase()} and cannot be allocated right now.`;
+                return;
+            }
+
+            const holderName = allocation.to_user_id ? userName(allocation.to_user_id) : 'a department';
+
+            if (allocation.status === 'ACTIVE') {
+                alertBox.style.display = 'flex';
+                document.getElementById('allocation-alert-title').textContent = 'Asset Currently Allocated';
+                document.getElementById('allocation-alert-text').innerHTML =
+                    `This asset is currently assigned to <strong>${holderName}</strong>. Submitting a transfer or return request requires approval from an Asset Manager or Department Head.`;
+
+                transferPanel.style.display = 'block';
+                document.getElementById('transfer-from').textContent = holderName;
+                populateUserSelect('transfer-to-user', users, allocation.to_user_id);
+                return;
+            }
+
+            // TRANSFER_REQUESTED or RETURN_REQUESTED
+            alertBox.style.display = 'flex';
+            document.getElementById('allocation-alert-title').textContent = 'Request Pending';
+            document.getElementById('allocation-alert-text').textContent =
+                allocation.status === 'TRANSFER_REQUESTED'
+                    ? `A transfer from ${holderName} to ${userName(allocation.transfer_to_user_id)} is awaiting approval.`
+                    : `A return from ${holderName} is awaiting approval.`;
+
+            if (isManager) {
+                pendingPanel.style.display = 'block';
+                document.getElementById('pending-approval-text').textContent =
+                    allocation.status === 'TRANSFER_REQUESTED'
+                        ? `Approve transfer to ${userName(allocation.transfer_to_user_id)}?`
+                        : `Approve return from ${holderName}?`;
+                document.getElementById('pending-approval-approve').onclick = () => approvePending(allocation);
+            }
+        }
+
+        function renderHistory(history) {
+            const list = document.getElementById('history-list');
+            if (!history || history.length === 0) {
+                list.innerHTML = '<p class="muted" style="padding:20px;">No allocation history yet.</p>';
+                return;
+            }
+            list.innerHTML = history.map(a => {
+                let title, note;
+                if (a.status === 'RETURNED') {
+                    title = `Returned by ${userName(a.to_user_id) || 'employee'}`;
+                    note = a.return_condition ? `Condition: ${a.return_condition}` : '';
+                } else {
+                    title = `Allocated to ${userName(a.to_user_id) || 'department'}`;
+                    note = a.reason ? `Reason: ${a.reason}` : '';
+                }
+                return `
+                    <article class="history-item">
+                        <div class="icon-circle"><svg class="inline-icon" viewBox="0 0 24 24" style="color:#57344f;"><path d="M16 21v-2a4 4 0 0 0-8 0v2"/><circle cx="12" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div>
+                        <div class="history-copy">
+                            <div class="history-row"><p class="history-title">${title}</p><p class="history-date">${formatDate(a.allocated_at)}</p></div>
+                            <p class="history-note">${note} <span style="opacity:.6;">(${a.status})</span></p>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        async function allocateAsset(assetId) {
+            const toUser = document.getElementById('allocate-to-user').value;
+            if (!toUser) { window.alert('Select an employee.'); return; }
+            const expectedReturnDate = document.getElementById('allocate-return-date').value || null;
+            const reason = document.getElementById('allocate-reason').value || null;
+            try {
+                await window.AssetFlowAPI.postJson('/allocations', {
+                    asset_id: assetId, to_user_id: toUser, expected_return_date: expectedReturnDate, reason,
+                });
+                await loadPage(assetId);
+            } catch (error) {
+                window.alert('Failed to allocate: ' + error.message);
+            }
+        }
+
+        async function submitTransfer(assetId) {
+            const toUser = document.getElementById('transfer-to-user').value;
+            if (!toUser) { window.alert('Select the new assignee.'); return; }
+            const reason = document.getElementById('transfer-reason').value || null;
+            try {
+                await window.AssetFlowAPI.postJson(`/allocations/${assetId}/transfer-request`, { to_user_id: toUser, reason });
+                await loadPage(assetId);
+            } catch (error) {
+                window.alert('Failed to submit transfer request: ' + error.message);
+            }
+        }
+
+        async function submitReturn(assetId) {
+            const condition = window.prompt('Condition check-in notes (required):');
+            if (!condition) return;
+            try {
+                await window.AssetFlowAPI.postJson(`/allocations/${assetId}/return-request`, { return_condition: condition });
+                await loadPage(assetId);
+            } catch (error) {
+                window.alert('Failed to submit return request: ' + error.message);
+            }
+        }
+
+        async function approvePending(allocation) {
+            try {
+                if (allocation.status === 'TRANSFER_REQUESTED') {
+                    await window.AssetFlowAPI.postJson(`/allocations/${allocation.id}/approve-transfer`);
+                } else {
+                    await window.AssetFlowAPI.postJson(`/allocations/${allocation.id}/approve-return`);
+                }
+                await loadPage(currentAsset.id);
+            } catch (error) {
+                window.alert('Failed to approve: ' + error.message);
+            }
+        }
+
+        // Handle Logout
+        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.AssetFlowAPI.logout();
+        });
+    </script>
+</body>
+</html>

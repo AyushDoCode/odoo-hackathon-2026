@@ -30,3 +30,6 @@ htmlcov/
 # Claude
 CLAUDE.md
 .claude/
+
+# Packaging
+*.egg-info/

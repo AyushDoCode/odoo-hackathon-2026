@@ -1,1 +1,132 @@
-# odoo-hackathon-2026
+# AssetFlow Backend
+
+FastAPI backend for the AssetFlow Enterprise Asset and Resource Management System.
+It implements the hackathon problem statement without purchasing, invoicing, accounting,
+or hosted runtime integrations.
+
+## Run the API (and the frontend -- same process)
+
+Python 3.12 or newer is required. `app/main.py` mounts the frontend (in
+`frontend/`) as static files alongside the `/api` routes, so one command starts
+the whole app:
+
+```powershell
+Copy-Item .env.example .env
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e ".[dev]"
+alembic upgrade head
+python -m app.scripts.bootstrap_admin
+uvicorn app.main:app --reload
+```
+
+Open `http://localhost:8000/` for the app (login page first) or `http://localhost:8000/docs`
+for the API reference -- no separate frontend server or build step required.
+
+The current development `.env` may point to Railway. The project deployment uses the
+local MySQL and local upload volumes defined in `docker-compose.yml`:
+
+```powershell
+docker compose up --build
+```
+
+No CDN, external authentication, cloud file storage, email provider, analytics service,
+or background-job service is required. Ensure the Python packages and `mysql:8` image are
+cached before an offline demonstration.
+
+## Frontend handoff
+
+Every API route lives under `/api` (e.g. `POST /api/auth/login`) -- this is what keeps
+them from colliding with the frontend's own static paths (its `assets/` folder in
+particular). `frontend/assets/api.js` already targets `/api` by default.
+
+- App: `http://localhost:8000/`
+- Swagger UI: `http://localhost:8000/docs`
+- OpenAPI JSON: `http://localhost:8000/openapi.json`
+- Health check: `http://localhost:8000/health`
+
+Send `Authorization: Bearer <access_token>` on protected endpoints. Since the frontend
+and API now share an origin, `CORS_ORIGINS` mainly matters if you ever run the frontend
+from a different origin (e.g. a separate dev server) during development.
+
+File uploads accept JPEG, PNG, and PDF files up to `MAX_UPLOAD_BYTES`. Upload first with
+`POST /files`, then store its returned local URL in an asset or maintenance request.
+
+For the POC, `POST /auth/forgot-password` returns a one-time token directly so password
+reset works without an email provider. A production system must deliver that token through
+a private channel instead of returning it to the browser.
+
+## Roles
+
+| Role | Core permissions |
+| --- | --- |
+| Admin | Organization setup, employee role assignment, audit cycles, organization analytics |
+| Asset Manager | Asset registration/allocation, transfer and return approval, maintenance approval, discrepancy resolution, reports |
+| Department Head | Department-scoped assets, transfers, bookings, and audit visibility |
+| Employee | Own allocated assets, bookings, maintenance requests, transfer/return requests, and notifications |
+
+Signup always creates an `EMPLOYEE`; roles can only be changed through the Admin-only
+employee directory endpoint. The initial Admin is created idempotently with:
+
+```powershell
+python -m app.scripts.bootstrap_admin
+```
+
+## Required workflows
+
+### Organization setup
+
+- `GET/POST/PATCH /departments`
+- `GET/POST/PATCH /categories`
+- `GET/PATCH /users`
+
+Department and category writes, employee activation, department assignment, and role
+promotion are Admin-only.
+
+### Assets and allocation
+
+- Assets receive an automatic `AF-0001` style tag.
+- Asset search supports tag, serial number, QR code, category, status, department, and location.
+- Allocation locks the asset row and rejects double allocation.
+- A holder requests transfer; an Asset Manager/Admin or the responsible Department Head approves it.
+- A holder requests return; an Asset Manager/Admin approves condition check-in before the asset becomes Available.
+
+### Resource booking
+
+- Only assets marked `is_bookable` can be booked.
+- Overlap uses a half-open interval: `[start_time, end_time)`, so adjacent bookings are valid.
+- Returned API status is derived as `UPCOMING`, `ONGOING`, `COMPLETED`, or `CANCELLED`.
+- Only the owner, responsible Department Head, Asset Manager, or Admin can cancel/reschedule.
+
+### Maintenance
+
+Workflow: `PENDING -> APPROVED/REJECTED -> TECHNICIAN_ASSIGNED -> IN_PROGRESS -> RESOLVED`.
+
+Approval checks in an active allocation before moving the asset to Maintenance. Only the
+assigned technician or Asset Manager/Admin can start or resolve work. Resolution returns
+the asset to Available.
+
+### Audit
+
+Admin creates a scoped cycle and assigns auditors. All items must be verified. Missing or
+damaged discrepancies require Asset Manager/Admin resolution approval before Admin can
+close the cycle. Closing locks the cycle and updates affected asset states.
+
+### Notifications and activity
+
+- `GET /activity/notifications` returns only the current user's notifications and also
+  materializes due booking reminders and overdue-return alerts without an external scheduler.
+- `POST /activity/notifications/{id}/read` marks a personal notification read.
+- `GET /activity/logs` is the privileged organization audit log.
+
+## Verification
+
+```powershell
+pytest -q
+python -m compileall -q app tests
+ruff check app tests
+mypy app tests
+```
+
+The integration tests use the `DATABASE_URL` configured in `.env`; never point tests at a
+production database.

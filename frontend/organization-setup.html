@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organization Setup | AssetFlow by odoo</title>
+    <link rel="stylesheet" href="assets/pages.css">
+    <script src="assets/api.js"></script>
+    <script>
+        if (window.AssetFlowAPI) {
+            window.AssetFlowAPI.requireAuth();
+        }
+    </script>
+</head>
+<body class="app-page">
+    <div class="app-shell">
+        <aside class="side-nav">
+            <div>
+                <div class="brand">
+                    <div class="brand-row">
+                        <span class="brand-mark square"><img src="assets/icons/nav-org.svg" alt="" style="width:20px;height:18px;"></span>
+                        <div>
+                            <div class="brand-title">AssetFlow</div>
+                            <div class="brand-subtitle caps">Enterprise Management</div>
+                        </div>
+                    </div>
+                </div>
+                <nav class="nav-main">
+                    <ul class="nav-list inset">
+                        <li><a class="nav-link" href="dashboard.html"><img src="assets/icons/nav-dashboard.svg" alt=""><span>Dashboard</span></a></li>
+                        <li><a class="nav-link active" href="organization-setup.html"><img src="assets/icons/nav-org.svg" alt=""><span>Organization Setup</span></a></li>
+                        <li><a class="nav-link" href="assets-directory.html"><img src="assets/icons/nav-assets.svg" alt=""><span>Assets</span></a></li>
+                        <li><a class="nav-link" href="allocation-transfer.html"><img src="assets/icons/nav-allocation.svg" alt=""><span>Allocation &amp; Transfer</span></a></li>
+                        <li><a class="nav-link" href="resource-booking.html"><img src="assets/icons/nav-booking.svg" alt=""><span>Resource Booking</span></a></li>
+                        <li><a class="nav-link" href="maintenance.html"><img src="assets/icons/nav-maintenance.svg" alt=""><span>Maintenance</span></a></li>
+                        <li><a class="nav-link" href="audit.html"><img src="assets/icons/nav-audit.svg" alt=""><span>Audit</span></a></li>
+                        <li><a class="nav-link" href="reports.html"><img src="assets/icons/nav-reports.svg" alt=""><span>Reports</span></a></li>
+                        <li><a class="nav-link" href="notifications.html"><img src="assets/icons/nav-notifications.svg" alt=""><span>Notifications</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="nav-footer">
+                <a class="nav-link" href="#"><img src="assets/icons/nav-settings.svg" alt=""><span>Settings</span></a>
+                <a class="nav-link" href="index.html"><img src="assets/icons/nav-logout.svg" alt=""><span>Logout</span></a>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <header class="topbar strong">
+                <div class="search-wrap">
+                    <input class="search-input white" type="text" placeholder="Search organization...">
+                    <img class="search-icon" src="assets/icons/icon-search.svg" alt="">
+                </div>
+                <div class="top-actions">
+                    <button class="icon-button"><img src="assets/icons/icon-bell.svg" alt=""><span class="dot"></span></button>
+                    <button class="icon-button"><img src="assets/icons/icon-help.svg" alt=""></button>
+                    <div style="width:1px;height:24px;background:#d1c3ca;"></div>
+                    <div class="user-chip" id="user-chip-container">
+                        <div class="avatar-text" style="width:32px;height:32px;border-radius:12px;font-size:11px;">US</div>
+                        <div>
+                            <div class="tiny-caps" style="color:#191c1d;" id="user-chip-name">User</div>
+                            <div style="font-size:10px;line-height:10px;color:#4e444a;" id="user-chip-role">Role</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="page-content">
+                <div class="content-inner stack-24">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Organization Setup</h1>
+                            <p class="page-kicker">Manage enterprise hierarchy, departments, and personnel mapping.</p>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn outline">
+                                <svg class="small-icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg>
+                                Export
+                            </button>
+                            <button class="btn primary" id="add-new-button">+ Add New</button>
+                        </div>
+                    </div>
+
+                    <section class="card r8" style="overflow:hidden;">
+                        <div class="tabs" id="org-tabs">
+                            <button class="tab active" data-target="panel-departments">Departments</button>
+                            <button class="tab" data-target="panel-categories">Categories</button>
+                            <button class="tab" data-target="panel-employees">Employees</button>
+                        </div>
+
+                        <!-- Departments Panel -->
+                        <div id="panel-departments" class="tab-panel active">
+                            <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--bg);padding:16px;">
+                                <div class="search-wrap" style="width:288px;">
+                                    <input class="search-input" style="height:36px;background:#fff;padding-left:37px;" type="text" placeholder="Filter departments...">
+                                    <img class="search-icon" src="assets/icons/ad-search-filter.svg" alt="">
+                                </div>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <span style="font-size:12px;color:#4e444a;">View:</span>
+                                    <div style="display:flex;border:1px solid var(--border);background:#f3f4f5;border-radius:2px;padding:3px;">
+                                        <button class="icon-button" style="width:28px;height:28px;border-radius:2px;background:#fff;"><svg class="small-icon" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg></button>
+                                        <button class="icon-button" style="width:28px;height:28px;border-radius:2px;"><svg class="small-icon" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:48px;"><span style="display:block;width:16px;height:16px;border:1px solid #d1c3ca;background:#fff;"></span></th>
+                                        <th>Department Name</th>
+                                        <th>Head of Department</th>
+                                        <th>Parent Dept</th>
+                                        <th>Status</th>
+                                        <th class="right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="departments-tbody">
+                                    <tr>
+                                        <td colspan="6" style="text-align:center;padding:24px;" class="muted">Loading departments...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="pagination">
+                                <span style="font-size:12px;color:#4e444a;" id="dept-pagination-info">Showing 0 entries</span>
+                                <div class="page-numbers">
+                                    <span class="page-box" style="opacity:.5;">&lt;</span>
+                                    <span class="page-box active">1</span>
+                                    <span class="page-box">&gt;</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Categories Panel -->
+                        <div id="panel-categories" class="tab-panel" style="display:none;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Category Name</th>
+                                        <th>Description</th>
+                                        <th>Status</th>
+                                        <th class="right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="categories-tbody">
+                                    <tr><td colspan="4" style="text-align:center;padding:24px;" class="muted">Loading categories...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Employees Panel -->
+                        <div id="panel-employees" class="tab-panel" style="display:none;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Department</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th class="right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employees-tbody">
+                                    <tr><td colspan="6" style="text-align:center;padding:24px;" class="muted">Loading employees...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let activeTab = 'panel-departments';
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Update user profile chip
+            const user = window.AssetFlowAPI.getUser();
+            if (user && user.name) {
+                document.querySelector('#user-chip-container .avatar-text').textContent = user.name.substring(0, 2).toUpperCase();
+                document.getElementById('user-chip-name').textContent = user.name;
+                document.getElementById('user-chip-role').textContent = user.role || 'User';
+            }
+
+            // Tab switching logic -- lazily loads each panel's data the first time it's opened.
+            const tabs = document.querySelectorAll('#org-tabs .tab');
+            const panels = document.querySelectorAll('.tab-panel');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', async () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    panels.forEach(p => p.style.display = 'none');
+
+                    tab.classList.add('active');
+                    activeTab = tab.getAttribute('data-target');
+                    const target = document.getElementById(activeTab);
+                    if (target) target.style.display = 'block';
+
+                    if (activeTab === 'panel-categories') await loadCategories();
+                    if (activeTab === 'panel-employees') await loadEmployees();
+                });
+            });
+
+            document.getElementById('add-new-button').addEventListener('click', handleAddNew);
+
+            await loadDepartments();
+        });
+
+        async function handleAddNew() {
+            try {
+                if (activeTab === 'panel-categories') {
+                    const name = window.prompt('Category name (e.g. Electronics, Furniture, Vehicles):');
+                    if (!name) return;
+                    await window.AssetFlowAPI.postJson('/categories', { name });
+                    await loadCategories();
+                } else if (activeTab === 'panel-employees') {
+                    window.alert('Employees are created via Sign Up. Use this tab to promote an existing Employee to Department Head or Asset Manager.');
+                } else {
+                    const name = window.prompt('Department name:');
+                    if (!name) return;
+                    await window.AssetFlowAPI.postJson('/departments', { name });
+                    await loadDepartments();
+                }
+            } catch (error) {
+                window.alert('Failed: ' + error.message);
+            }
+        }
+
+        async function loadDepartments() {
+            const tbody = document.getElementById('departments-tbody');
+            const info = document.getElementById('dept-pagination-info');
+            try {
+                const departments = await window.AssetFlowAPI.fetchApi('/departments');
+
+                if (!departments || departments.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;" class="muted">No departments found.</td></tr>`;
+                    info.textContent = 'Showing 0 entries';
+                    return;
+                }
+
+                tbody.innerHTML = departments.map(dept => {
+                    const statusBadge = dept.is_active
+                        ? `<span class="badge green"><span class="status-dot"></span>Active</span>`
+                        : `<span class="badge"><span class="status-dot"></span>Inactive</span>`;
+
+                    const headName = dept.head ? dept.head.name : '<em class="muted">Unassigned</em>';
+                    const headAvatar = dept.head
+                        ? `<span class="avatar-mini" style="display:inline-block;width:20px;height:20px;border-radius:4px;background:#e1e3e4;color:#4e444a;text-align:center;line-height:20px;font-size:10px;margin-right:8px;">${dept.head.name.substring(0,2).toUpperCase()}</span>`
+                        : '';
+
+                    const parentName = dept.parent_department ? dept.parent_department.name : '<span class="muted">None</span>';
+                    const toggleLabel = dept.is_active ? 'Deactivate' : 'Activate';
+
+                    return `
+                        <tr>
+                            <td><span style="display:block;width:16px;height:16px;border:1px solid #d1c3ca;background:#fff;border-radius:2px;"></span></td>
+                            <td><strong>${dept.name}</strong></td>
+                            <td style="display:flex;align-items:center;">${headAvatar}${headName}</td>
+                            <td>${parentName}</td>
+                            <td>${statusBadge}</td>
+                            <td class="right">
+                                <button class="btn soft" style="padding:4px 10px;font-size:12px;" onclick="toggleDepartment('${dept.id}', ${dept.is_active})">${toggleLabel}</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                info.textContent = `Showing 1 to ${departments.length} of ${departments.length} entries`;
+
+            } catch (error) {
+                console.error("Failed to load departments:", error);
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:red;">Error loading departments.</td></tr>`;
+            }
+        }
+
+        async function toggleDepartment(departmentId, isActive) {
+            try {
+                await window.AssetFlowAPI.patchJson(`/departments/${departmentId}`, { is_active: !isActive });
+                await loadDepartments();
+            } catch (error) {
+                window.alert('Failed: ' + error.message);
+            }
+        }
+
+        async function loadCategories() {
+            const tbody = document.getElementById('categories-tbody');
+            try {
+                const categories = await window.AssetFlowAPI.fetchApi('/categories');
+
+                if (!categories || categories.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:24px;" class="muted">No categories found.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = categories.map(cat => {
+                    const statusBadge = cat.is_active
+                        ? `<span class="badge green"><span class="status-dot"></span>Active</span>`
+                        : `<span class="badge"><span class="status-dot"></span>Inactive</span>`;
+                    return `
+                        <tr>
+                            <td><strong>${cat.name}</strong></td>
+                            <td class="subtle">${cat.description || '-'}</td>
+                            <td>${statusBadge}</td>
+                            <td class="right">
+                                <button class="btn soft" style="padding:4px 10px;font-size:12px;" onclick="toggleCategory('${cat.id}', ${cat.is_active})">${cat.is_active ? 'Deactivate' : 'Activate'}</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Failed to load categories:", error);
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:24px;color:red;">Error loading categories.</td></tr>`;
+            }
+        }
+
+        async function toggleCategory(categoryId, isActive) {
+            try {
+                await window.AssetFlowAPI.patchJson(`/categories/${categoryId}`, { is_active: !isActive });
+                await loadCategories();
+            } catch (error) {
+                window.alert('Failed: ' + error.message);
+            }
+        }
+
+        async function loadEmployees() {
+            const tbody = document.getElementById('employees-tbody');
+            try {
+                const [employees, departments] = await Promise.all([
+                    window.AssetFlowAPI.fetchApi('/users'),
+                    window.AssetFlowAPI.fetchApi('/departments'),
+                ]);
+                const deptById = {};
+                departments.forEach(d => { deptById[d.id] = d.name; });
+
+                if (!employees || employees.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;" class="muted">No employees found.</td></tr>`;
+                    return;
+                }
+
+                const currentUser = window.AssetFlowAPI.getUser();
+                const isAdmin = currentUser && currentUser.role === 'ADMIN';
+
+                tbody.innerHTML = employees.map(emp => {
+                    const statusBadge = emp.is_active
+                        ? `<span class="badge green"><span class="status-dot"></span>Active</span>`
+                        : `<span class="badge"><span class="status-dot"></span>Inactive</span>`;
+                    const deptName = emp.department_id ? (deptById[emp.department_id] || '<span class="muted">Unknown</span>') : '<span class="muted">None</span>';
+
+                    let actions = '<span class="muted" style="font-size:12px;">-</span>';
+                    if (isAdmin) {
+                        if (emp.role === 'EMPLOYEE') {
+                            actions = `
+                                <button class="btn soft" style="padding:4px 8px;font-size:11px;" onclick="promoteEmployee('${emp.id}', 'DEPARTMENT_HEAD')">Make Dept Head</button>
+                                <button class="btn soft" style="padding:4px 8px;font-size:11px;" onclick="promoteEmployee('${emp.id}', 'ASSET_MANAGER')">Make Asset Mgr</button>
+                            `;
+                        } else if (emp.role !== 'ADMIN') {
+                            actions = `<button class="btn soft" style="padding:4px 8px;font-size:11px;" onclick="promoteEmployee('${emp.id}', 'EMPLOYEE')">Revert to Employee</button>`;
+                        }
+                    }
+
+                    return `
+                        <tr>
+                            <td><strong>${emp.name}</strong></td>
+                            <td class="subtle">${emp.email}</td>
+                            <td>${deptName}</td>
+                            <td><span class="badge small">${emp.role}</span></td>
+                            <td>${statusBadge}</td>
+                            <td class="right">${actions}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Failed to load employees:", error);
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:red;">Error loading employees.</td></tr>`;
+            }
+        }
+
+        async function promoteEmployee(userId, role) {
+            try {
+                let departmentId;
+                if (role === 'DEPARTMENT_HEAD') {
+                    const departments = await window.AssetFlowAPI.fetchApi('/departments');
+                    const names = departments.map((d, i) => `${i + 1}. ${d.name}`).join('\n');
+                    const choice = window.prompt(`Assign to which department? Enter the number:\n${names}`);
+                    const index = parseInt(choice, 10) - 1;
+                    if (!departments[index]) return;
+                    departmentId = departments[index].id;
+                }
+                const body = { role };
+                if (departmentId) body.department_id = departmentId;
+                await window.AssetFlowAPI.patchJson(`/users/${userId}`, body);
+                await loadEmployees();
+            } catch (error) {
+                window.alert('Failed: ' + error.message);
+            }
+        }
+
+        // Handle Logout
+        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.AssetFlowAPI.logout();
+        });
+    </script>
+</body>
+</html>
